@@ -89,6 +89,12 @@ class Parser:
     return str(self.parse())
 
   def parse(self):
+    program = []
+    while self.tokens.next is not None:
+      program.append(self.parse_top())
+    return program
+    
+  def parse_top(self):
     init = self.tokens.next
 
     if init.type != 'keyword':
@@ -194,7 +200,7 @@ class Parser:
     self.tokens._next()
     args = []
     while True:
-      args.append(self.parse())
+      args.append(self.parse_top())
       if self.tokens.next.text == ',':
         self.tokens._next()
       elif self.tokens._next().text == ')':

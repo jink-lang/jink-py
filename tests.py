@@ -49,7 +49,7 @@ class ParserTest(unittest.TestCase):
     tokens = self.lexer.parse(code)
     self.parser.tokens = FutureIter(tokens)
     parsed = self.parser.parse_literal()
-    assert parsed == "{CallExpression print [{StringLiteral hello}]}", "Issue in function call parsing."
+    assert parsed == "[{CallExpression print [{StringLiteral hello}]}]", "Issue in function call parsing."
 
   def test_math(self):
     """Ensures arithmetic is parsed properly."""
@@ -57,7 +57,7 @@ class ParserTest(unittest.TestCase):
     tokens = self.lexer.parse(code)
     self.parser.tokens = FutureIter(tokens)
     parsed = self.parser.parse_literal()
-    assert parsed == "{BinaryOperator + {left: {IntegerLiteral 5}, right: {BinaryOperator / {left: {IntegerLiteral 5}, right: {IntegerLiteral 2}}}}}", "Issue in arithmetic parsing."
+    assert parsed == "[{BinaryOperator + {left: {IntegerLiteral 5}, right: {BinaryOperator / {left: {IntegerLiteral 5}, right: {IntegerLiteral 2}}}}}]", "Issue in arithmetic parsing."
   
   def test_assignment(self):
     """Ensures variable declaration and assignment are parsed properly."""
@@ -65,7 +65,7 @@ class ParserTest(unittest.TestCase):
     tokens = self.lexer.parse(code)
     self.parser.tokens = FutureIter(tokens)
     parsed = self.parser.parse_literal()
-    assert parsed == "{Assignment {IdentLiteral test} {BinaryOperator / {left: {BinaryOperator * {left: {IntegerLiteral 5}, right: {IntegerLiteral 5}}}, right: {IntegerLiteral 5}}}}", "Issue in assignment parsing."
+    assert parsed == "[{Assignment {IdentLiteral test} {BinaryOperator / {left: {BinaryOperator * {left: {IntegerLiteral 5}, right: {IntegerLiteral 5}}}, right: {IntegerLiteral 5}}}}]", "Issue in assignment parsing."
 
 
 # TODO Interpreter tests
