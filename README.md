@@ -2,6 +2,8 @@
 
 Jink is a strongly-typed, JavaScript-like programming language.
 
+[![Build Status](https://travis-ci.org/Jacob-Noah/jink.svg?branch=master)](https://travis-ci.org/Jacob-Noah/jink)
+
 ## Example
 
 ```jink
