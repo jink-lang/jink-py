@@ -8,5 +8,5 @@ int example_func(int in) {
 }
 
 int out = example_func(1336)
-print(out)
+print(out) :: Prints 1337 to the console
 ```
