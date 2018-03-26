@@ -63,3 +63,4 @@ venv.bak/
 .vscode/
 .vs/
 old/
+\.gitlab-ci\.yml
