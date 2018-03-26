@@ -23,4 +23,4 @@ Big thanks to [king1600](https://github.com/king1600) for helping me to better u
 
 This project is distributed under the MIT License - see the [license file](LICENSE) for details.
 
-Copyright © 2017 Jacob
+Copyright © 2018 Jacob
