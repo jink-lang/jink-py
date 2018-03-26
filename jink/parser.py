@@ -65,12 +65,12 @@ class IdentLiteral:
   __repr__ = __str__
 
 class Assignment:
-  __slots__ = ('type', 'ident', 'value')
-  def __init__(self, type, ident, value):
-    self.type, self.ident, self.value = \
-      type, ident, value
+  __slots__ = ('type', 'name', 'value')
+  def __init__(self, type, name, value):
+    self.type, self.name, self.value = \
+      type, name, value
   def __str__(self):
-    return f'{{Assignment {self.type} {self.ident} = {self.value}}}'
+    return f'{{Assignment {self.name} {self.value}}}'
   __repr__ = __str__
 
 class CallExpression:
@@ -169,6 +169,8 @@ class Parser:
       ident = self.tokens._next().text
       if self.tokens.next.text == '(':
         return self.parse_call(ident)
+      elif self.tokens.next.text == '=':
+        return self.parse_assignment(None, ident)
       else:
         return IdentLiteral(ident)
 
