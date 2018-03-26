@@ -107,7 +107,7 @@ class Lexer:
   # Variables are fun, especially when you name them ridiculous things.
   def parse_ident(self, char):
     ident = char
-    while self.code.next is not None and (self.code.next.isalpha() or self.code.next in ('_', '$')):
+    while self.code.next is not None and (self.code.next.isalnum() or self.code.next in ('_', '$')):
       ident += self.code.next
       self.code._next()
       self.line_pos += 1
