@@ -1,7 +1,7 @@
 import unittest
-from lang.lexer import Lexer
-from lang.parser import Parser
-from lang.utils.future_iter import FutureIter
+from jink.lexer import Lexer
+from jink.parser import Parser
+from jink.utils.future_iter import FutureIter
 
 class LexerTest(unittest.TestCase):
   def setUp(self):
