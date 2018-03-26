@@ -8,7 +8,7 @@ Jink is a strongly-typed, JavaScript-like programming language.
 
 ```jink
 int example_func(int in) {
-    return in++
+    return ++in
 }
 
 int out = example_func(1336)
