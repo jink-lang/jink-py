@@ -65,7 +65,7 @@ class ParserTest(unittest.TestCase):
     tokens = self.lexer.parse(code)
     self.parser.tokens = FutureIter(tokens)
     parsed = self.parser.parse_literal()
-    assert parsed == "{Assignment int test = {BinaryOperator / {left: {BinaryOperator * {left: {IntegerLiteral 5}, right: {IntegerLiteral 5}}}, right: {IntegerLiteral 5}}}}", "Issue in assignment parsing."
+    assert parsed == "{Assignment int {IdentLiteral test} = {BinaryOperator / {left: {BinaryOperator * {left: {IntegerLiteral 5}, right: {IntegerLiteral 5}}}, right: {IntegerLiteral 5}}}}", "Issue in assignment parsing."
 
 
 # TODO Interpreter tests
