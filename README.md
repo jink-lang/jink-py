@@ -2,7 +2,7 @@
 Jink is a strongly-typed, JavaScript-like programming language.
 
 ## Example
-```
+```jink
 int example_func(int in) {
     return in++
 }
