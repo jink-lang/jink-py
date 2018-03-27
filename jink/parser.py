@@ -98,6 +98,14 @@ class FunctionParameter:
     return f'{{FunctionParameter {self.type} {self.name}}}'
   __repr__ = __str__
 
+class Return:
+  __slots__ = ('expression')
+  def __init__(self, expression):
+    self.expression = expression
+  def __str__(self):
+    return f'{{Return {self.expression}}}'
+  __repr__ = __str__
+
 class Parser:
   def __init__(self, tokens):
     self.tokens = FutureIter(tokens)
@@ -125,7 +133,7 @@ class Parser:
     return program
     
   def parse_top(self):
-    init = self.skip_newlines()
+    init = self.tokens.next
 
     if init == None:
       return
@@ -161,6 +169,8 @@ class Parser:
         elif cur.text == '(' and init.text != 'void':
           return self.parse_call(init.text)
 
+      elif init.text == 'return':
+        return self.parse_return()
       else:
         self.tokens._next()
         cur = self.tokens.next
@@ -278,22 +288,24 @@ class Parser:
     if self.tokens.next.text == '{':
       self.tokens._next()
       while True:
-        ting = self.parse_top()
-        body.append(ting)
-        if self.tokens.next.type == 'newline':
-          self.tokens._next()
-        elif self.tokens._next().text == '}':
+        self.skip_newlines()
+        body.append(self.parse_top())
+        self.skip_newlines()
+        if self.tokens._next().text == '}':
           break
         else:
           raise Exception(f"Expected }} on line {self.tokens.next.line}")
     
     # Single line functions
     else:
-      print(self.tokens.next)
-      body.append(self.parse_expr())
+      body.append(self.parse_top())
     
     return Function(return_type, name, params, body)
-      
+
+  def parse_return(self):
+    self.tokens._next()
+    expr = self.parse_expr()
+    return Return(expr)
 
   # TODO conditional parsing
   def parse_conditional(self):
