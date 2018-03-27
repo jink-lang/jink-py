@@ -81,26 +81,58 @@ class CallExpression:
     return f'{{CallExpression {self.name} {self.args}}}'
   __repr__ = __str__
 
+class Function:
+  __slots__ = ('return_type', 'name', 'params', 'body')
+  def __init__(self, return_type, name, params, body):
+    self.return_type, self.name, self.params, self.body = \
+      return_type, name, params, body
+  def __str__(self):
+    return f'{{Function {self.name} {self.params} {self.body}}}'
+  __repr__ = __str__
+
+class FunctionParameter:
+  __slots__ = ('type', 'name', 'default')
+  def __init__(self, type, name, default):
+    self.type, self.name, self.default = type, name, default
+  def __str__(self):
+    return f'{{FunctionParameter {self.type} {self.name}}}'
+  __repr__ = __str__
+
 class Parser:
   def __init__(self, tokens):
     self.tokens = FutureIter(tokens)
 
+  def skip_newlines(self):
+    while self.tokens.next != None and self.tokens.next.type == 'newline':
+      self.tokens._next()
+    return self.tokens.next
+  
   def parse_literal(self):
     return str(self.parse())
+
+  def parse_to_console(self):
+    program = self.parse()
+    for expr in program:
+      print(expr)
 
   def parse(self):
     program = []
     while self.tokens.next is not None:
-      program.append(self.parse_top())
+      if self.tokens.next.type != 'newline':
+        program.append(self.parse_top())
+      else:
+        self.tokens._next()
     return program
     
   def parse_top(self):
-    init = self.tokens.next
+    init = self.skip_newlines()
 
-    if init.type != 'keyword':
+    if init == None:
+      return
+    elif init.type != 'keyword':
       return self.parse_expr()
     else:
-      if init.text in TYPES:
+      if init.text in TYPES or init.text == 'void':
         self.tokens._next()
         cur = self.tokens.next
 
@@ -110,15 +142,23 @@ class Parser:
           nxt = self.tokens.next
 
           # Assignment
-          if nxt.text == '=':
+          if nxt.text == '=' and init.text != 'void':
             return self.parse_assignment(init.text, cur.text)
           
           # Function declaration
           elif nxt.text == '(':
-            return self.parse_function()
+            return self.parse_function(init.text, cur.text)
+          
+          # Function parameter
+          elif nxt.text in (',', ')', ':'):
+            if nxt.text == ':':
+              self.tokens._next()
+              default = self.parse_expr()
+              return FunctionParameter(init.text, cur.text, default)
+            return FunctionParameter(init.text, cur.text, None)
         
         # Keyword functions
-        elif cur.text == '(':
+        elif cur.text == '(' and init.text != 'void':
           return self.parse_call(init.text)
 
       else:
@@ -129,6 +169,8 @@ class Parser:
           return self.parse_conditional()
 
   def parse_expr(self, precedence=0):
+    self.skip_newlines()
+      
     left = self.parse_primary()
     current = self.tokens.next
 
@@ -150,7 +192,10 @@ class Parser:
   def parse_primary(self):
     current = self.tokens.next
 
-    if self.is_unary_operator(current.text):
+    if current == None:
+      raise Exception("Expected primary expression")
+    
+    elif self.is_unary_operator(current.text):
       operator = self.tokens._next().text
       value = self.parse_expr(self.get_precedence(operator))
       return UnaryOperator(operator, value)
@@ -180,10 +225,10 @@ class Parser:
       else:
         return IdentLiteral(ident)
 
-    raise Exception("Expected primary expression")
+    raise Exception(f"Expected primary expression, got '{current.text}' on line {current.line}")
 
   def is_unary_operator(self, operator):
-    return operator in ('-', '+')
+    return operator in ('-', '+', '++', '--', '!')
 
   def is_left_associative(self, operator):
     return operator not in ('++', '--', '+=', '-=', '=')
@@ -195,6 +240,11 @@ class Parser:
       return 2
     else:
       return 0
+
+  def parse_assignment(self, type, name):
+    self.tokens._next()
+    expr = self.parse_expr()
+    return Assignment(type, IdentLiteral(name), expr)
 
   def parse_call(self, func_name):
     self.tokens._next()
@@ -209,11 +259,48 @@ class Parser:
         raise Exception("Expected )")
     return CallExpression(func_name, args)
 
-  def parse_assignment(self, type, name):
-    self.tokens._next()
-    expr = self.parse_expr()
-    return Assignment(type, IdentLiteral(name), expr)
+  def parse_function(self, return_type, name):
+    init = self.tokens._next()
+    params = []
+    body = []
+
+    # Parameters
+    while True:
+      params.append(self.parse_top())
+      if self.tokens.next.text == ',':
+        self.tokens._next()
+      elif self.tokens._next().text == ')':
+        break
+      else:
+        raise Exception(f"Expected ) on line {self.tokens.next.line}")
+
+    # Function body
+    if self.tokens.next.text == '{':
+      self.tokens._next()
+      while True:
+        ting = self.parse_top()
+        body.append(ting)
+        if self.tokens.next.type == 'newline':
+          self.tokens._next()
+        elif self.tokens._next().text == '}':
+          break
+        else:
+          raise Exception(f"Expected }} on line {self.tokens.next.line}")
+    
+    # Single line functions
+    else:
+      print(self.tokens.next)
+      body.append(self.parse_expr())
+    
+    return Function(return_type, name, params, body)
+      
 
   # TODO conditional parsing
   def parse_conditional(self):
-    return None
+    init = self.tokens._next()
+    cur = self.tokens.next
+    
+    if cur.text != '(':
+      raise Exception(f"Expected ( on line {init.line}.")
+    else:
+      print('hi')
