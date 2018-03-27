@@ -110,8 +110,9 @@ class Parser:
   def __init__(self, tokens):
     self.tokens = FutureIter(tokens)
 
-  def skip_newlines(self):
-    while self.tokens.next != None and self.tokens.next.type == 'newline':
+  def skip_newlines(self, count=-1):
+    while self.tokens.next != None and self.tokens.next.type == 'newline' and count != 0:
+      count -= 1
       self.tokens._next()
     return self.tokens.next
   
@@ -201,7 +202,7 @@ class Parser:
 
   def parse_primary(self):
     current = self.tokens.next
-
+    
     if current == None:
       raise Exception("Expected primary expression")
     
@@ -214,7 +215,8 @@ class Parser:
       self.tokens._next()
       value = self.parse_expr(0)
       if self.tokens._next().text is not ')':
-        raise Exception("Expected )")
+        tk = self.tokens.next
+        raise Exception(f"Expected ')', got '{tk.text}' on line {tk.line}")
       return value
 
     elif current.type == 'number':
@@ -276,6 +278,9 @@ class Parser:
 
     # Parameters
     while True:
+      if self.tokens.next.text == ')':
+        self.tokens._next()
+        break
       params.append(self.parse_top())
       if self.tokens.next.text == ',':
         self.tokens._next()
@@ -289,6 +294,9 @@ class Parser:
       self.tokens._next()
       while True:
         self.skip_newlines()
+        if self.tokens.next.text == '}':
+          self.tokens._next()
+          break
         body.append(self.parse_top())
         self.skip_newlines()
         if self.tokens._next().text == '}':
@@ -296,8 +304,13 @@ class Parser:
         else:
           raise Exception(f"Expected }} on line {self.tokens.next.line}")
     
-    # Single line functions
+    # One or two line functions
     else:
+      # Skip only one line
+      # If there is more space before an expression, you're doing it wrong kiddo
+      self.skip_newlines(1)
+      if self.tokens.next.type == 'newline':
+        raise Exception(f"Empty function body on line {init.line}")
       body.append(self.parse_top())
     
     return Function(return_type, name, params, body)
