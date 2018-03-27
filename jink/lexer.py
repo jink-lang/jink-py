@@ -64,13 +64,24 @@ class Lexer:
       
       char = self.code._next()
 
+      if char == '\\':
+        if self.code.next == '\n':
+          self.line += 1
+          self.line_pos = 0
+        self.code._next()
+        char = self.code.next
+        continue
+      
       if char.isspace():
         if char == '\n':
+          yield Token('newline', 'newline', self.line, self.pos)
           self.line_pos = 0
           self.line += 1
       elif char == ':':
         if self.code.next in [':', '>']:
           self.process_comment()
+        else:
+          yield Token('colon', ':', self.line, self.pos)
       elif char == '(':
         yield Token('lparen', '(', self.line, self.pos)
       elif char == ')':
@@ -136,17 +147,26 @@ class Lexer:
     end = False
     start = self.pos
     while self.code.next is not None:
+
       # Oh boy, are we escaping?
       if self.code.next == '\\':
         self.code._next()
         self.line_pos += 1
+
+        # Get escaped character
+        nxt = self.code._next()
+
+        # Newline is a special case
+        if nxt == '\n':
+          self.line += 1
+          self.line_pos = 0
+        
         # Add escaped character and move on
-        string += self.code.next
-        self.code._next()
-        self.line_pos += 1
+        else:
+          string += nxt
+          self.line_pos += 1
       else:
-        string += self.code.next
-        self.code._next()
+        string += self.code._next()
         self.line_pos += 1
 
       # Ending the string? So soon? Aw. :(
@@ -157,8 +177,9 @@ class Lexer:
         break
 
     if self.code.next == None and end == False:
+      start -= 1
       raise Exception('A string was not properly enclosed at {0}:{1}\n  {2}\n  {3}'.format(
-        self.line, self.line_pos, str(self.code).split('\n')[self.line - 1], f"{' ' * self.line_pos}^"
+        self.line, start, str(self.code).split('\n')[self.line - 1], f"{' ' * start}^"
       ))
 
     return Token('string', string, self.line, start)
