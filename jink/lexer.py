@@ -70,9 +70,10 @@ class Lexer:
       
       if char.isspace():
         if char == '\n':
-          yield Token('newline', 'newline', self.line, self.pos)
           self.line_pos = 0
           self.line += 1
+          yield Token('newline', 'newline', self.line, self.pos)
+
       elif char == ':':
         if self.code.next in [':', '>']:
           self.process_comment()
@@ -108,7 +109,7 @@ class Lexer:
 
       else:
         raise Exception('Invalid character on {0}:{1}\n  {2}\n  {3}'.format(
-          self.line, self.pos, str(self.code).split('\n')[self.line - 1], f"{' ' * (self.pos - 1)}^"
+          self.line, self.line_pos, str(self.code).split('\n')[self.line - 1], f"{' ' * (self.line_pos - 1)}^"
         ))
 
   # Variables are fun, especially when you name them ridiculous things.
@@ -133,7 +134,7 @@ class Lexer:
       self.code._next()
     if not operator in OPERATORS:
       raise Exception('Invalid operator on {0}:{1}\n  {2}\n  {3}'.format(
-        self.line, line_start, str(self.code).split('\n')[self.line - 1], f"{' ' * line_start}^"
+        self.line, line_start, str(self.code).split('\n')[self.line - 1], f"{' ' * (line_start - 1)}^"
       ))
     return Token('operator', operator, self.line, start)
 
@@ -172,9 +173,8 @@ class Lexer:
         break
 
     if self.code.next == None and end == False:
-      start -= 1
       raise Exception('A string was not properly enclosed at {0}:{1}\n  {2}\n  {3}'.format(
-        self.line, start, str(self.code).split('\n')[self.line - 1], f"{' ' * start}^"
+        self.line, start, str(self.code).split('\n')[self.line - 1], f"{' ' * (start - 1)}^"
       ))
 
     return Token('string', string, self.line, start)
@@ -191,7 +191,7 @@ class Lexer:
     # The heck?
     if not num.replace('.', '', 1).isdigit():
       raise Exception('Invalid number on {0}:{1}\n  {2}\n  {3}'.format(
-        self.line, line_start, str(self.code).split('\n')[self.line - 1], f"{' ' * line_start}^"
+        self.line, line_start, str(self.code).split('\n')[self.line - 1], f"{' ' * (line_start - 1)}^"
       ))
     else:
       return Token('number', num, self.line, self.pos)
