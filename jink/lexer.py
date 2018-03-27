@@ -28,16 +28,12 @@ OPERATORS = (
 
 # One token boi
 class Token:
-  __slots__ = ('type', 'text', 'line', 'pos', 'defined_type')
-
+  __slots__ = ('type', 'text', 'line', 'pos')
   def __init__(self, type, text, line, pos):
     self.type, self.text, self.line, self.pos = \
       type, text, line, pos
-
-    self.defined_type = ''
-
   def __str__(self):
-    return '{{{0} {1}}}'.format(self.type, self.text)
+    return f'{{{self.type} {self.text}}}'
   __repr__ = __str__
 
 # One lexer boi
@@ -147,7 +143,6 @@ class Lexer:
     end = False
     start = self.pos
     while self.code.next is not None:
-
       # Oh boy, are we escaping?
       if self.code.next == '\\':
         self.code._next()
@@ -206,7 +201,7 @@ class Lexer:
     cur = self.code.next
     # Single-line comment
     if self.code.next == ':':
-      while not self.code.next in ('\r', '\n'):
+      while not self.code.next in ('\r', '\n', None):
         self.line_pos += 1
         self.code._next()
     # Multi-line comment
