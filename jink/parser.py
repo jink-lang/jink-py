@@ -292,14 +292,15 @@ class Parser:
     # Function body
     if self.tokens.next.text == '{':
       self.tokens._next()
+      self.skip_newlines()
       while True:
-        self.skip_newlines()
         if self.tokens.next.text == '}':
           self.tokens._next()
           break
         body.append(self.parse_top())
-        self.skip_newlines()
-        if self.tokens._next().text == '}':
+        if self.tokens.next.type == 'newline':
+          self.skip_newlines()
+        elif self.tokens._next().text == '}':
           break
         else:
           raise Exception(f"Expected }} on line {self.tokens.next.line}")
