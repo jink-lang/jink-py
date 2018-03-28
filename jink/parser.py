@@ -106,6 +106,14 @@ class Return:
     return f'{{Return {self.expression}}}'
   __repr__ = __str__
 
+class Conditional:
+  __slots__ = ('type', 'expression', 'body', 'else_body')
+  def __init__(self, type, expression, body, else_body):
+    self.type, self.expression, self.body, self.else_body = \
+      type, expression, body, else_body
+  def __str__(self):
+    return f'{{Conditional {self.type} {self.expression} {self.body} {self.else_body}}}'
+  __repr__ = __str__
 class Parser:
   def __init__(self, tokens):
     self.tokens = FutureIter(tokens)
@@ -140,48 +148,48 @@ class Parser:
       return
     elif init.type != 'keyword':
       return self.parse_expr()
-    else:
-      if init.text in TYPES or init.text == 'void':
+    elif init.text in TYPES or init.text == 'void':
+      self.tokens._next()
+      cur = self.tokens.next
+
+      # We got an identifier?
+      if cur.type == 'ident':
         self.tokens._next()
-        cur = self.tokens.next
+        nxt = self.tokens.next
 
-        # Assignment / declaration
-        if cur.type == 'ident':
-          self.tokens._next()
-          nxt = self.tokens.next
-
-          # Assignment
-          if nxt.text == '=' and init.text != 'void':
-            return self.parse_assignment(init.text, cur.text)
-          
-          # Function declaration
-          elif nxt.text == '(':
-            return self.parse_function(init.text, cur.text)
-          
-          # Function parameter
-          elif nxt.text in (',', ')', ':'):
-            if nxt.text == ':':
-              self.tokens._next()
-              default = self.parse_expr()
-              return FunctionParameter(init.text, cur.text, default)
-            return FunctionParameter(init.text, cur.text, None)
+        # Assignments
+        if nxt.text == '=' and init.text != 'void':
+          return self.parse_assignment(init.text, cur.text)
         
-        # Keyword functions
-        elif cur.text == '(' and init.text != 'void':
-          return self.parse_call(init.text)
-
-      elif init.text == 'return':
-        return self.parse_return()
-      else:
-        self.tokens._next()
-        cur = self.tokens.next
-
-        if cur.text == 'if':
-          return self.parse_conditional()
+        # Function declarations
+        elif nxt.text == '(':
+          return self.parse_function(init.text, cur.text)
+        
+        # Function parameters
+        elif nxt.text in (',', ')', ':'):
+          if nxt.text == ':':
+            self.tokens._next()
+            default = self.parse_expr()
+            return FunctionParameter(init.text, cur.text, default)
+          return FunctionParameter(init.text, cur.text, None)
+      
+      # Keyword functions
+      elif cur.text == '(' and init.text != 'void':
+        return self.parse_call(init.text)
+    
+    # Returns
+    elif init.text == 'return':
+      return self.parse_return()
+    
+    # Conditionals
+    elif init.text == 'if':
+      return self.parse_conditional()
+    
+    else:
+      raise Exception(f"Expected keyword, got '{init.text}' on line {init.line}")
 
   def parse_expr(self, precedence=0):
     self.skip_newlines()
-      
     left = self.parse_primary()
     current = self.tokens.next
 
@@ -260,36 +268,66 @@ class Parser:
 
   def parse_call(self, func_name):
     self.tokens._next()
-    args = []
-    while True:
-      args.append(self.parse_top())
-      if self.tokens.next.text == ',':
-        self.tokens._next()
-      elif self.tokens._next().text == ')':
-        break
-      else:
-        raise Exception("Expected )")
+    args = self.parse_args_params()
     return CallExpression(func_name, args)
 
   def parse_function(self, return_type, name):
     init = self.tokens._next()
-    params = []
-    body = []
-
-    # Parameters
+    params = self.parse_args_params()
+    body = self.parse_block()
+    return Function(return_type, name, params, body)
+  
+  # Parse arguments and parameters
+  # For both function calls and function definitions, respectively
+  def parse_args_params(self):
+    l = []
     while True:
       if self.tokens.next.text == ')':
         self.tokens._next()
         break
-      params.append(self.parse_top())
+      l.append(self.parse_top())
       if self.tokens.next.text == ',':
         self.tokens._next()
       elif self.tokens._next().text == ')':
         break
       else:
-        raise Exception(f"Expected ) on line {self.tokens.next.line}")
+        raise Exception(f"Expected ), got {self.tokens.next.text} on line {self.tokens.next.line}")
 
-    # Function body
+    return l
+
+  # Return parsing
+  def parse_return(self):
+    self.tokens._next()
+    expr = self.parse_expr()
+    return Return(expr)
+
+  # Conditional parsing
+  def parse_conditional(self):
+    init = self.tokens._next()
+
+    # Parse else first because it is unlike if/elseif
+    if init.text == 'else':
+      return Conditional(init.text, None, self.parse_block(), None)
+    
+    body = []
+    else_body = []
+    cur = self.tokens.next
+    if cur.text != '(':
+      raise Exception(f"Expected '(', got '{cur.text}' on line {cur.line}")
+    expr = self.parse_expr()
+    body = self.parse_block()
+
+    # If an else case is next
+    self.skip_newlines()
+    nxt = self.tokens.next
+    if nxt and nxt.type == 'keyword' and nxt.text in ('elseif', 'else'):
+      else_body.append(self.parse_conditional())
+
+    return Conditional(init.text, expr, body, else_body)
+
+  # Parse blocks for functions and conditionals
+  def parse_block(self):
+    body = []
     if self.tokens.next.text == '{':
       self.tokens._next()
       self.skip_newlines()
@@ -303,9 +341,10 @@ class Parser:
         elif self.tokens._next().text == '}':
           break
         else:
-          raise Exception(f"Expected }} on line {self.tokens.next.line}")
-    
-    # One or two line functions
+          raise Exception(f"Expected '}}', got {self.tokens.next.text} on line {self.tokens.next.line}")
+
+    # One or two lined
+    # ex: string say_hi() return print("Hi")
     else:
       # Skip only one line
       # If there is more space before an expression, you're doing it wrong kiddo
@@ -314,19 +353,4 @@ class Parser:
         raise Exception(f"Empty function body on line {init.line}")
       body.append(self.parse_top())
     
-    return Function(return_type, name, params, body)
-
-  def parse_return(self):
-    self.tokens._next()
-    expr = self.parse_expr()
-    return Return(expr)
-
-  # TODO conditional parsing
-  def parse_conditional(self):
-    init = self.tokens._next()
-    cur = self.tokens.next
-    
-    if cur.text != '(':
-      raise Exception(f"Expected ( on line {init.line}.")
-    else:
-      print('hi')
+    return body
