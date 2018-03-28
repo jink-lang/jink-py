@@ -19,14 +19,14 @@ class LexerTest(unittest.TestCase):
     lexed = self.lexer.parse_literal(code)
     assert lexed == "[{keyword string}, {ident hey_there}, {operator =}, {string 'Hello world'}]", "Issue in escape character lexical analysis."
 
-  def test_variable_1(self):
-    """Ensures variables are lexed properly."""
+  def test_assignment_1(self):
+    """Ensures variable declaration and assignment are lexed properly."""
     code = "string hello = 'world'"
     lexed = self.lexer.parse_literal(code)
     assert lexed == "[{keyword string}, {ident hello}, {operator =}, {string world}]", "Issue in variable declaration tokenization."
 
-  def test_variable_2(self):
-    """Ensures variables are lexed properly."""
+  def test_assignment_2(self):
+    """Ensures variable declaration and assignment are lexed properly."""
     code = "float pi = 3.14"
     lexed = self.lexer.parse_literal(code)
     assert lexed == "[{keyword float}, {ident pi}, {operator =}, {number 3.14}]", "Issue in variable declaration tokenization."
@@ -41,32 +41,35 @@ class LexerTest(unittest.TestCase):
 class ParserTest(unittest.TestCase):
   def setUp(self):
     self.lexer = Lexer()
-    self.parser = Parser('hi')
+    self.parser = Parser()
 
   def test_call(self):
     """Ensures function calls are parsed properly."""
     code = "print('hello')"
     tokens = self.lexer.parse(code)
-    self.parser.tokens = FutureIter(tokens)
-    parsed = self.parser.parse_literal()
+    parsed = self.parser.parse_literal(tokens)
     assert parsed == "[{CallExpression print [{StringLiteral hello}]}]", "Issue in function call parsing."
 
   def test_math(self):
     """Ensures arithmetic is parsed properly."""
     code = "5 + 5 / 2"
     tokens = self.lexer.parse(code)
-    self.parser.tokens = FutureIter(tokens)
-    parsed = self.parser.parse_literal()
+    parsed = self.parser.parse_literal(tokens)
     assert parsed == "[{BinaryOperator + {left: {IntegerLiteral 5}, right: {BinaryOperator / {left: {IntegerLiteral 5}, right: {IntegerLiteral 2}}}}}]", "Issue in arithmetic parsing."
   
-  def test_assignment(self):
+  def test_assignment_1(self):
     """Ensures variable declaration and assignment are parsed properly."""
     code = "int test = 5 * 5 / 5"
     tokens = self.lexer.parse(code)
-    self.parser.tokens = FutureIter(tokens)
-    parsed = self.parser.parse_literal()
+    parsed = self.parser.parse_literal(tokens)
     assert parsed == "[{Assignment {IdentLiteral test} {BinaryOperator / {left: {BinaryOperator * {left: {IntegerLiteral 5}, right: {IntegerLiteral 5}}}, right: {IntegerLiteral 5}}}}]", "Issue in assignment parsing."
-
+  
+  def test_conditional_1(self):
+    """Ensures conditionals are parsed properly."""
+    code = "if (1 == 1) return 1"
+    tokens = self.lexer.parse(code)
+    parsed = self.parser.parse_literal(tokens)
+    assert parsed == "[{Conditional if {BinaryOperator == {left: {IntegerLiteral 1}, right: {IntegerLiteral 1}}} [{Return {IntegerLiteral 1}}] []}]", "Issue in inline conditional parsing."
 
 # TODO Interpreter tests
 
