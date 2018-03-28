@@ -115,24 +115,8 @@ class Conditional:
     return f'{{Conditional {self.type} {self.expression} {self.body} {self.else_body}}}'
   __repr__ = __str__
 class Parser:
-  def __init__(self, tokens):
+  def parse(self, tokens):
     self.tokens = FutureIter(tokens)
-
-  def skip_newlines(self, count=-1):
-    while self.tokens.next != None and self.tokens.next.type == 'newline' and count != 0:
-      count -= 1
-      self.tokens._next()
-    return self.tokens.next
-  
-  def parse_literal(self):
-    return str(self.parse())
-
-  def parse_to_console(self):
-    program = self.parse()
-    for expr in program:
-      print(expr)
-
-  def parse(self):
     program = []
     while self.tokens.next is not None:
       if self.tokens.next.type != 'newline':
@@ -140,6 +124,20 @@ class Parser:
       else:
         self.tokens._next()
     return program
+
+  def parse_literal(self, tokens):
+    return str(self.parse(tokens))
+
+  def parse_to_console(self, tokens):
+    program = self.parse(tokens)
+    for expr in program:
+      print(expr)
+
+  def skip_newlines(self, count=-1):
+    while self.tokens.next != None and self.tokens.next.type == 'newline' and count != 0:
+      count -= 1
+      self.tokens._next()
+    return self.tokens.next
     
   def parse_top(self):
     init = self.tokens.next
