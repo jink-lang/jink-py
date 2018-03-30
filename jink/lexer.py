@@ -1,3 +1,4 @@
+from .classes import LexerToken as Token
 from .utils import future_iter
 FutureIter = future_iter.FutureIter
 
@@ -25,16 +26,6 @@ OPERATORS = (
   '>=', '<=', '==', '++', '--'
   '!=', '&&', '||'
 )
-
-# One token boi
-class Token:
-  __slots__ = ('type', 'text', 'line', 'pos')
-  def __init__(self, type, text, line, pos):
-    self.type, self.text, self.line, self.pos = \
-      type, text, line, pos
-  def __str__(self):
-    return f'{{{self.type} {self.text}}}'
-  __repr__ = __str__
 
 # One lexer boi
 class Lexer:
