@@ -1,4 +1,3 @@
-
 class FutureIter:
   def __init__(self, i):
     self._input = i
