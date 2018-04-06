@@ -202,10 +202,8 @@ class Lexer:
         if self.code.next in ('\r', '\n'):
           self.line_pos = 0
           self.line += 1
-        self.code._next()
+        cur = self.code._next()
 
-        cur = self.code.next
-      
-      self.code._next()
       if self.code.next is None or self.code.next is not ':':
         raise Exception('A multi-line comment was not closed.')
+      self.code._next()
