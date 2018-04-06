@@ -38,7 +38,7 @@ This example will go over types, keywords and operators in Jink
 - `#`  
 - `>=` 
 - `<=`  
-- `==  
+- `==`  
 - `++`  
 - `--`  
 - `!=`  
