@@ -6,7 +6,8 @@ TYPES = (
   'int',
   'float',
   'string',
-  'bool'
+  'bool',
+  'void'
 )
 
 KEYWORDS = (
@@ -17,6 +18,9 @@ KEYWORDS = (
 )
 
 class Parser:
+  def __init__(self):
+    self.tokens = None
+
   def parse(self, tokens):
     self.tokens = FutureIter(tokens)
     program = []
@@ -48,7 +52,7 @@ class Parser:
       return
     elif init.type != 'keyword':
       return self.parse_expr()
-    elif init.text in TYPES or init.text == 'void':
+    elif init.text in TYPES:
       self.tokens._next()
       cur = self.tokens.next
 
@@ -70,14 +74,14 @@ class Parser:
           if nxt.text == ':':
             self.tokens._next()
             default = self.parse_expr()
-            return FunctionParameter(init.text, cur.text, default)
-          return FunctionParameter(init.text, cur.text, None)
+            return FunctionParameter(cur.text, init.text, default)
+          return FunctionParameter(cur.text, init.text, None)
 
       # Keyword functions
       elif cur.text == '(' and init.text != 'void':
         return self.parse_call(init.text)
 
-    # Returns
+    # Return statements
     elif init.text == 'return':
       return self.parse_return()
     
@@ -169,7 +173,7 @@ class Parser:
   def parse_call(self, func_name):
     self.tokens._next()
     args = self.parse_args_params()
-    return CallExpression(func_name, args)
+    return CallExpression(IdentLiteral(func_name), args)
 
   def parse_function(self, return_type, name):
     init = self.tokens._next()
