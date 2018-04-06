@@ -48,7 +48,7 @@ class ParserTest(unittest.TestCase):
     code = "print('hello')"
     tokens = self.lexer.parse(code)
     parsed = self.parser.parse_literal(tokens)
-    assert parsed == "[{CallExpression print [{StringLiteral hello}]}]", "Issue in function call parsing."
+    assert parsed == "[{CallExpression {IdentLiteral print} [{StringLiteral hello}]}]", "Issue in function call parsing."
 
   def test_math(self):
     """Ensures arithmetic is parsed properly."""
@@ -70,8 +70,6 @@ class ParserTest(unittest.TestCase):
     tokens = self.lexer.parse(code)
     parsed = self.parser.parse_literal(tokens)
     assert parsed == "[{Conditional if {BinaryOperator == {left: {IntegerLiteral 1}, right: {IntegerLiteral 1}}} [{Return {IntegerLiteral 1}}] []}]", "Issue in inline conditional parsing."
-
-# TODO Interpreter tests
 
 
 if __name__ == "__main__":
