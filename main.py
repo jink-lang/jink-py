@@ -11,16 +11,21 @@ parser = Parser()
 interpreter = Interpreter()
 
 code = """
-string print(string hello) {
-  print(hello)
+int add(int a, int b, int c) {
+  int result = a + b + c
+  return result
 }
 
-print('hi')
+int result = add(1, 2, 3)
+print(result)
 """
 
 code2 = """
-int jew = 5
-print(string(jew))
+int hi() {
+  return 1
+}
+
+print(hi())
 """
 
 code3 = """
@@ -35,14 +40,6 @@ my_function(hey_earth) :: Returns 1337.0
 # if len(sys.argv) > 1:
 #   code = open(sys.argv[1]).read()
 
-#   lexed = lexer.parse(code)
-#   print(lexed)
-#   print('\n')
-#   parsed = parser.parse(lexed)
-#   print(parsed)
-
 env = Environment(None)
-
 AST = validate(optimize(parser.parse(lexer.parse(code))))
-# print(AST)
 interpreter.evaluate(AST, env)
