@@ -1,11 +1,16 @@
-# Major credit to http://lisperator.net
-
 from .classes import *
 
 TYPES = {
   'int': int,
   'float': float,
   'string': str
+}
+
+BINOP_EVALS = {
+  '+': lambda x, y: x + y,
+  '-': lambda x, y: x - y,
+  '/': lambda x, y: x / y,
+  '*': lambda x, y: x * y
 }
 
 class Interpreter:
@@ -19,13 +24,17 @@ class Interpreter:
 
   def evaluate_top(self, expr):
     if isinstance(expr, IdentLiteral):
-      return self.env._get(expr.name)
+      return self.env.get_var(expr.name)
 
     elif isinstance(expr, (StringLiteral, IntegerLiteral, FloatingPointLiteral)):
       return self.unwrap_value(expr)
+    
+    elif isinstance(expr, BinaryOperator):
+      left, right = self.evaluate_top(expr.left), self.evaluate_top(expr.right)
+      return BINOP_EVALS[expr.operator](self.unwrap_value(left), self.unwrap_value(right)) or 'null'
 
     elif isinstance(expr, Assignment):
-      self.env.set_var(expr.ident.name, expr.type, self.unwrap_value(expr.value))
+      self.env.set_var(expr.ident.name, expr.type, self.unwrap_value(self.evaluate_top(expr.value)))
 
     elif isinstance(expr, CallExpression):
       func = self.evaluate_top(expr.name)
@@ -35,34 +44,48 @@ class Interpreter:
       return self.make_function(expr)
 
     elif isinstance(expr, Return):
-      r = { 'type': 'return', 'expr': expr.expression }
-      return r
-  
-  # Cheeky way of getting the value out of things
+      result = self.evaluate_top(expr.expression) or None
+      return { 'type': 'return', 'value': result }
+
+  # Obtain literal values
   def unwrap_value(self, v):
     if hasattr(v, 'value'):
       return v.value
-    elif hasattr(v, '__getitem__') and not isinstance(v, str):
+    elif hasattr(v, '__getitem__') and not isinstance(v, (str, list)):
       return v['value']
     else:
       return v
 
+  # Make a function
   def make_function(self, expr):
     def function(*args):
+      # Create a scope for the function parameters, arguments and body
+      scope = self.env.extend()
+
+      # Tuple overrides the list that we already pass to this
+      args = args[0]
       _type = expr.return_type
       params = expr.params
-      scope = self.env.extend()
-      for i in params:
-        try:
-          scope.def_var(i.name, i.type, i.default)
-        except:
-          raise Exception(f"Improper function parameter at function '{expr.name}'.")
+
+      if len(args) > len(params):
+        raise Exception(f"Function '{expr.name}' takes {len(params)} arguments but {len(args)} were given.")
+
+      for p, a in zip(params, args):
+        if p and a:
+          try:
+            scope.def_var(p.name, p.type, a or p.default or 'null')
+          except:
+            raise Exception(f"Improper function parameter or call value at function '{expr.name}'.")
+
+      body = self.evaluate(expr.body, scope)
+      if not body:
+        return
       
-      for i in self.evaluate(expr.body, scope):
-        if _type:
+      if _type and _type != 'void':
+        for i in body:
           if hasattr(i, 'type') and i.type == 'return':
-            if not isinstance(i.expr, TYPES[_type]):
-              raise Exception("Gay")
+            if not isinstance(i.value, TYPES[_type]):
+              raise Exception(f"Function '{expr.name}' returned item of incorrect type: '{i.value}'.")
             else:
               return i.expr
 
