@@ -22,6 +22,10 @@ def const_fold(expr):
       return IntegerLiteral(int(BINOP_EVALS[expr.operator](left.value, right.value)))
     elif isinstance(left, (FloatingPointLiteral, IntegerLiteral)) and isinstance(right, (FloatingPointLiteral, IntegerLiteral)):
       return FloatingPointLiteral(BINOP_EVALS[expr.operator](left.value, right.value))
+    elif isinstance(left, StringLiteral) or isinstance(right, StringLiteral):
+      if expr.operator != '+':
+        raise Exception(f"Only '+' operator can be used with strings.")
+      return StringLiteral(str(left.value) + str(right.value))
   elif isinstance(expr, Assignment):
     expr.value = const_fold(expr.value)
   elif isinstance(expr, Function):
