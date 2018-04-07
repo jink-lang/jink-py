@@ -1,3 +1,57 @@
+class Environment:
+  def __init__(self, parent=None):
+    self.index = parent.index if parent else {}
+    self.parent = parent
+
+    # Initialize environment with a few primitive functions
+    self.def_func('print', lambda args: print('\n'.join([str(x) for x in args]) or 'null'))
+    self.def_func('string', lambda args: [str(x) for x in args])
+
+  def extend(self):
+    return Environment(self)
+
+  def find_scope(self, name):
+    scope = self
+    while scope:
+      if name in scope.index:
+        return scope
+      scope = scope.parent
+
+  def get_var(self, name):
+    scope = self.find_scope(name)
+    if not scope and self.parent:
+      raise Exception(f"Undefined variable: '{name}'.")
+    
+    if name in (scope or self).index:
+      return self.index[name]
+    
+    raise Exception(f"Undefined variable: '{name}'.")
+
+  def set_var(self, name, type, value):
+    scope = self.find_scope(name)
+    if not scope and self.parent:
+      raise Exception(f"Undefined variable: '{name}'.")
+
+    if name in (scope or self).index:
+      if (scope or self).index[name]['type'] == type or isinstance(value, TYPES[self.index[name]['type']]):
+        self.index[name]['value'] = value
+      else:
+        raise Exception(f"Type mismatch or variable already defined elsewhere: '{name}'.")
+    (scope or self).index[name] = { 'type': type, 'value': value }
+    return value
+
+  def def_var(self, name, type, value):
+    self.index[name] = { 'type': type, 'value': value }
+    return value
+
+  def def_func(self, name, body):
+    self.index[name] = body
+    return body
+
+  def __str__(self):
+    return str(self.index)
+
+
 class LexerToken:
   __slots__ = ('type', 'text', 'line', 'pos')
   def __init__(self, type, text, line, pos):
@@ -84,11 +138,11 @@ class Function:
   __repr__ = __str__
 
 class FunctionParameter:
-  __slots__ = ('type', 'name', 'default')
-  def __init__(self, type, name, default):
-    self.type, self.name, self.default = type, name, default
+  __slots__ = ('name', 'type', 'default')
+  def __init__(self, name, type, default=None):
+    self.name, self.type, self.default = name, type, default
   def __str__(self):
-    return f'{{FunctionParameter {self.type} {self.name}}}'
+    return f'{{FunctionParameter {self.name} {self.type}}}'
   __repr__ = __str__
 
 class Return:
