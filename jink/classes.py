@@ -44,9 +44,9 @@ class Environment:
     self.index[name] = { 'type': type, 'value': value }
     return value
 
-  def def_func(self, name, body):
-    self.index[name] = body
-    return body
+  def def_func(self, name, func):
+    self.index[name] = func
+    return func
 
   def __str__(self):
     return str(self.index)
