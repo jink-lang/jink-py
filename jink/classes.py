@@ -44,7 +44,7 @@ class Environment:
       try:
         value = TYPES[type](value)
       except:
-        raise Exception(f"Failed assigning value '{value}' to variable '{name}' of type {type}.")
+        raise Exception(f"Failed assigning value '{value or 'null'}' to variable '{name}' of type {type}.")
 
     if name in (scope or self).index:
       self.index[name]['value'] = value
