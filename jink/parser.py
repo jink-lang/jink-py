@@ -98,8 +98,9 @@ class Parser:
     current = self.tokens.next
 
     while current and current.type == 'operator' and self.get_precedence(current.text) >= precedence:
-      operator = current.text
-      self.tokens._next()
+      operator = self.tokens._next().text
+      if operator == '++':
+        return UnaryOperator(operator + ':post', left)
 
       next_precedence = self.get_precedence(operator)
       if self.is_left_associative(operator):
@@ -114,10 +115,10 @@ class Parser:
 
   def parse_primary(self):
     current = self.tokens.next
-    
+
     if current == None:
       raise Exception("Expected primary expression")
-    
+
     elif self.is_unary_operator(current.text):
       operator = self.tokens._next().text
       value = self.parse_expr(self.get_precedence(operator))
@@ -191,6 +192,8 @@ class Parser:
         break
       l.append(self.parse_top())
       if self.tokens.next.text == ',':
+        self.tokens._next()
+      elif self.tokens.next.type == 'newline':
         self.tokens._next()
       elif self.tokens._next().text == ')':
         break
