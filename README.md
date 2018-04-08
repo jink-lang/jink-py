@@ -21,6 +21,16 @@ print(out) :: Prints 1337 to the console
 
 * Python 3.6+
 
+## Getting Started
+
+Jumping right in, if you clone this project you'll likely find the example files located in the docs directory. Assuming you've opened a command prompt in the main directory, you can run the example files using a command like this (`.jk` file extension added automatically):
+
+```
+py main.py ./docs/examples/01-hello_world
+```
+
+If you encounter any issues, post them here on GitHub and I'll be happy to resolve them!
+
 ## Contributing
 
 I will set up a contribution guide when I can. In the meantime, feel free to provide feedback any way you see fit. This project is still fairly new, after all.
