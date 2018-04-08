@@ -40,19 +40,16 @@ class Environment:
     if not scope and self.parent:
       raise Exception(f"Undefined variable: '{name}'.")
 
-    if name in (scope or self).index:
-      if (scope or self).index[name]['type'] == type or isinstance(value, TYPES[self.index[name]['type']]):
-        self.index[name]['value'] = value
-      else:
-        raise Exception(f"Type mismatch or variable already defined elsewhere: '{name}'.")
-    (scope or self).index[name] = { 'type': type, 'value': value }
-    return value
+    if type in TYPES:
+      try:
+        value = TYPES[type](value)
+      except:
+        raise Exception(f"Failed assigning value '{value}' to variable '{name}' of type {type}.")
 
-  def def_var(self, name, type, value):
-    if isinstance(value, TYPES[type]):
-      self.index[name] = { 'type': type, 'value': value }
+    if name in (scope or self).index:
+      self.index[name]['value'] = value
     else:
-      raise Exception(f"Type mismatch at definition of variable: '{name}'.")
+      (scope or self).index[name] = { 'type': type, 'value': value }
     return value
 
   def def_func(self, name, func):
