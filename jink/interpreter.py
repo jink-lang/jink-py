@@ -70,21 +70,20 @@ class Interpreter:
             scope.set_var(p.name, p.type, a or p.default or 'null', scope)
           except:
             raise Exception(f"Improper function parameter or call value at function '{func.name}'.")
-      
+
       _return = None
       for e in func.body:
         if func.return_type and func.return_type != 'void':
           result = self.evaluate([e], scope)[0]
-          if result:
-            if hasattr(result, '__getitem__') and result['type'] == 'return':
-              if isinstance(result['value'], TYPES[func.return_type]):
-                _return = result['value']
-              else:
-                raise Exception(f"Function '{func.name}' of return type {func.return_type} returned item of incorrect type: '{result['value']}'.")
+          if result and hasattr(result, '__getitem__') and result['type'] == 'return':
+            if isinstance(result['value'], TYPES[func.return_type]):
+              _return = result['value']
+            else:
+              raise Exception(f"Function '{func.name}' of return type {func.return_type} returned item of incorrect type: '{result['value']}'.")
         else:
           _return = self.evaluate([e], scope)
-      
-      if _return is None or (isinstance(_return, list) and _return[0]['value'] is None):
+
+      if _return is None or (isinstance(_return, list) and (_return[0] is None or _return[0]['value'] is None)):
         return 'null'
       else:
         return _return
