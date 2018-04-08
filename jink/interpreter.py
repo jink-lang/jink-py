@@ -67,7 +67,7 @@ class Interpreter:
       for p, a in zip(params, args):
         if p and a:
           try:
-            scope.def_var(p.name, p.type, a or p.default or 'null')
+            scope.set_var(p.name, p.type, a or p.default or 'null', scope)
           except:
             raise Exception(f"Improper function parameter or call value at function '{func.name}'.")
 
