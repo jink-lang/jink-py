@@ -1,10 +1,14 @@
 from .classes import *
 
 BINOP_EVALS = {
-  '+': lambda x, y: x + y,
-  '-': lambda x, y: x - y,
-  '/': lambda x, y: x / y,
-  '*': lambda x, y: x * y
+  '+': lambda x, y: 0 if x + y is None else x + y,
+  '-': lambda x, y: 0 if x - y is None else x - y,
+  '/': lambda x, y: 0 if x / y is None else x / y,
+  '*': lambda x, y: 0 if x * y is None else x * y
+}
+
+UNOP_EVALS = {
+  '++': lambda x: x + 1
 }
 
 class Interpreter:
@@ -24,13 +28,19 @@ class Interpreter:
 
     elif isinstance(expr, (StringLiteral, IntegerLiteral, FloatingPointLiteral)):
       return self.unwrap_value(expr)
-    
+
+    elif isinstance(expr, UnaryOperator):
+      value = self.evaluate_top(expr.value)
+      return UNOP_EVALS[expr.operator](self.unwrap_value(value)) or 0
+
     elif isinstance(expr, BinaryOperator):
       left, right = self.evaluate_top(expr.left), self.evaluate_top(expr.right)
-      return BINOP_EVALS[expr.operator](self.unwrap_value(left), self.unwrap_value(right)) or 'null'
+      return BINOP_EVALS[expr.operator](self.unwrap_value(left), self.unwrap_value(right)) or 0
 
     elif isinstance(expr, Assignment):
-      self.env.set_var(expr.ident.name, expr.type, self.unwrap_value(self.evaluate_top(expr.value)), self.env)
+      value = self.unwrap_value(self.evaluate_top(expr.value))
+      self.env.set_var(expr.ident.name, expr.type, value, self.env)
+      return value
 
     elif isinstance(expr, CallExpression):
       func = self.evaluate_top(expr.name)
@@ -40,7 +50,7 @@ class Interpreter:
       return self.make_function(expr)
 
     elif isinstance(expr, Return):
-      result = self.evaluate_top(expr.expression) or None
+      result = self.evaluate_top(expr.expression)
       return { 'type': 'return', 'value': self.unwrap_value(result) }
 
   # Obtain literal values
@@ -69,7 +79,7 @@ class Interpreter:
           try:
             scope.set_var(p.name, p.type, a or p.default or 'null', scope)
           except:
-            raise Exception(f"Improper function parameter or call value at function '{func.name}'.")
+            raise Exception(f"Improper function parameter or call argument at function '{func.name}'.")
 
       _return = None
       for e in func.body:
@@ -81,9 +91,9 @@ class Interpreter:
             else:
               raise Exception(f"Function '{func.name}' of return type {func.return_type} returned item of incorrect type: '{result['value']}'.")
         else:
-          _return = self.evaluate([e], scope)
+          self.evaluate([e], scope)
 
-      if _return is None or (isinstance(_return, list) and (_return[0] is None or _return[0]['value'] is None)):
+      if _return is None or (isinstance(_return, list) and (_return[0] in (None, 'null') or _return[0]['value'] is None)):
         return 'null'
       else:
         return _return
