@@ -1,0 +1,11 @@
+int add(int a, int b) return a + b
+int subtract(int a, int b) return a - b
+int multiply(int a, int b) return a * b
+float divide(int a, int b) return a / b
+
+print(
+  add(5, 5),
+  subtract(5, 5),
+  multiply(5, 5),
+  divide(5, 5)
+)
