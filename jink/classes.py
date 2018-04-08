@@ -1,3 +1,9 @@
+TYPES = {
+  'int': int,
+  'float': float,
+  'string': str
+}
+
 class Environment:
   def __init__(self, parent=None):
     self.index = parent.index if parent else {}
@@ -21,14 +27,16 @@ class Environment:
     scope = self.find_scope(name)
     if not scope and self.parent:
       raise Exception(f"Undefined variable: '{name}'.")
-    
+
     if name in (scope or self).index:
       return self.index[name]
-    
+
     raise Exception(f"Undefined variable: '{name}'.")
 
-  def set_var(self, name, type, value):
-    scope = self.find_scope(name)
+  def set_var(self, name, type, value, scope=None):
+    if not scope:
+      scope = self.find_scope(name)
+
     if not scope and self.parent:
       raise Exception(f"Undefined variable: '{name}'.")
 
@@ -41,7 +49,10 @@ class Environment:
     return value
 
   def def_var(self, name, type, value):
-    self.index[name] = { 'type': type, 'value': value }
+    if isinstance(value, TYPES[type]):
+      self.index[name] = { 'type': type, 'value': value }
+    else:
+      raise Exception(f"Type mismatch at definition of variable: '{name}'.")
     return value
 
   def def_func(self, name, func):
