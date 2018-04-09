@@ -1,0 +1,7 @@
+int a = 2
+
+if (a == 2) {
+  print("a is two!")
+} else {
+  print("a is not two! D: oh noes")
+}
