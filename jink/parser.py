@@ -150,6 +150,11 @@ class Parser:
       else:
         return IdentLiteral(ident)
 
+    elif current.type == 'keyword':
+      keyword = self.tokens._next().text
+      if self.tokens.next.text == '(':
+        return self.parse_call(keyword)
+
     raise Exception(f"Expected primary expression, got '{current.text}' on line {current.line}")
 
   def is_unary_operator(self, operator):
