@@ -11,7 +11,7 @@ class Environment:
 
     # Initialize environment with a few primitive functions
     self.def_func('print', lambda args: print('\n'.join([str(x) for x in args]) or 'null'))
-    self.def_func('string', lambda args: [str(x or 'null') for x in args] or 'null')
+    self.def_func('string', lambda args: [str(x or 'null') for x in args][0] if len(args) == 1 else [str(x or 'null') for x in args])
 
   def extend(self):
     return Environment(self)
