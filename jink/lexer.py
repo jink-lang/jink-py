@@ -58,7 +58,7 @@ class Lexer:
         self.code._next()
         char = self.code.next
         continue
-      
+
       if char.isspace():
         if char == '\n':
           self.line_pos = 0
@@ -110,7 +110,7 @@ class Lexer:
       ident += self.code.next
       self.code._next()
       self.line_pos += 1
-    
+
     if ident in KEYWORDS:
       return Token('keyword', ident, self.line, self.pos)
     return Token('ident', ident, self.line, self.pos)
@@ -147,7 +147,7 @@ class Lexer:
         if nxt == '\n':
           self.line += 1
           self.line_pos = 0
-        
+
         # Add escaped character and move on
         else:
           string += nxt
@@ -186,7 +186,7 @@ class Lexer:
       ))
     else:
       return Token('number', num, self.line, self.pos)
-  
+
   # Do I really need to comment on comments?
   def process_comment(self):
     cur = self.code.next
