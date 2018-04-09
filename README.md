@@ -20,6 +20,7 @@ print(out) :: Prints 1337 to the console
 ## Prerequisites
 
 * Python 3.6+
+* pyinstaller (`pip install pyinstaller`)
 
 ## Getting Started
 
