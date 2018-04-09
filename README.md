@@ -23,13 +23,14 @@ print(out) :: Prints 1337 to the console
 
 ## Getting Started
 
-Jumping right in, if you clone this project you'll likely find the example files located in the docs directory. Assuming you've opened a command prompt in the main directory, you can run the example files using a command like this (`.jk` file extension added automatically):
+To build an executable in the current directory, run `build-executable.bat` if you're on Windows. Linux support hasn't been added yet. MacOS may work, but hasn't been tested.
 
 ```
-py main.py ./docs/examples/01-hello_world
+cd build/jink
+jink.exe main.jk
 ```
 
-If you encounter any issues, post them here on GitHub and I'll be happy to resolve them!
+
 
 ## Contributing
 
