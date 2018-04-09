@@ -4,7 +4,11 @@ BINOP_EVALS = {
   '+': lambda x, y: 0 if x + y is None else x + y,
   '-': lambda x, y: 0 if x - y is None else x - y,
   '/': lambda x, y: 0 if x / y is None else x / y,
-  '*': lambda x, y: 0 if x * y is None else x * y
+  '*': lambda x, y: 0 if x * y is None else x * y,
+  '==': lambda x, y: 'true' if x == y else 'false',
+  '!=': lambda x, y: 'true' if x != y else 'false',
+  '>=': lambda x, y: 'true' if x >= y else 'false',
+  '<=': lambda x, y: 'true' if x <= y else 'false'
 }
 
 UNOP_EVALS = {
@@ -41,6 +45,16 @@ class Interpreter:
       value = self.unwrap_value(self.evaluate_top(expr.value))
       self.env.set_var(expr.ident.name, expr.type, value, self.env)
       return value
+
+    elif isinstance(expr, Conditional):
+      if hasattr(expr, 'expression') and expr.expression != None:
+        result = self.evaluate_top(expr.expression)
+        if result not in ('true', 'false'):
+          raise Exception("Conditional improperly used.")
+        if result == 'true':
+          return self.evaluate(expr.body, self.env)
+        return self.evaluate_top(expr.else_body[0])
+      self.evaluate(expr.body, self.env)
 
     elif isinstance(expr, CallExpression):
       func = self.evaluate_top(expr.name)
