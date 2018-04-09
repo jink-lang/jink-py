@@ -23,7 +23,14 @@ print(out) :: Prints 1337 to the console
 
 ## Getting Started
 
-To build an executable in the current directory, run 
+To build an executable in the current directory, run `build-executable.bat` if you're on Windows. Linux support hasn't been added yet. MacOS may work, but hasn't been tested.
+
+```
+cd build/jink
+jink.exe main.jk
+```
+
+
 
 ## Contributing
 
