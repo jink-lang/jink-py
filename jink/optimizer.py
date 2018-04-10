@@ -1,11 +1,5 @@
-from .classes import *
-
-BINOP_EVALS = {
-  '+': lambda x, y: x + y,
-  '-': lambda x, y: x - y,
-  '/': lambda x, y: x / y,
-  '*': lambda x, y: x * y
-}
+from .utils.classes import *
+from .utils.evals import *
 
 def optimize(ast):
   optimized = []
