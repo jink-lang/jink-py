@@ -2,7 +2,7 @@
 
 > Jink is a strongly-typed, JavaScript-like programming language.
 
-[![Build Status](https://travis-ci.org/Jacob-Noah/jink.svg?branch=master)](https://travis-ci.org/Jacob-Noah/jink) [![Discord](https://img.shields.io/discord/365599795886161941.svg)](https://discord.gg/cWzcQz2)
+[![Build Status](https://travis-ci.org/jink-lang/jink.svg?branch=master)](https://travis-ci.org/jink-lang/jink) [![Discord](https://img.shields.io/discord/365599795886161941.svg)](https://discord.gg/cWzcQz2)
 
 I made Jink to prove to myself that I could, and I plan to support it as long as I see fit. It has been my most difficult project, which makes it the most fun!
 
