@@ -63,7 +63,9 @@ class Parser:
 
         # Assignments
         if nxt.text == '=' and init.text != 'void':
-          return self.parse_assignment(init.text, cur.text)
+          return self.parse_assignment(init.text, cur.text, nxt.type)
+        elif nxt.type in ('newline'):
+          return self.parse_assignment(init.text, cur.text, nxt.type)
 
         # Function declarations
         elif nxt.text == '(':
@@ -148,7 +150,7 @@ class Parser:
       if self.tokens.next.text == '(':
         return self.parse_call(ident)
       elif self.tokens.next.text == '=':
-        return self.parse_assignment(None, ident)
+        return self.parse_assignment(None, ident, self.tokens.next)
       else:
         return IdentLiteral(ident)
 
@@ -177,8 +179,10 @@ class Parser:
     else:
       return 0
 
-  def parse_assignment(self, type, name):
+  def parse_assignment(self, type, name, nxt):
     self.tokens._next()
+    if nxt == 'newline':
+      return Assignment(type, IdentLiteral(name), None)
     expr = self.parse_expr()
     return Assignment(type, IdentLiteral(name), expr)
 
