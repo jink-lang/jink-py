@@ -11,5 +11,6 @@ BINOP_EVALS = {
 }
 
 UNOP_EVALS = {
+  '-': lambda x: 0 if x - x * 2 is None else x - x * 2,
   '++': lambda x: 0 if x + 1 is None else x + 1
 }

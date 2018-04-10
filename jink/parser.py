@@ -99,7 +99,7 @@ class Parser:
 
     while current and current.type == 'operator' and self.get_precedence(current.text) >= precedence:
       operator = self.tokens._next().text
-      if operator == '++':
+      if operator in ('++', '--'):
         return UnaryOperator(operator + ':post', left)
 
       next_precedence = self.get_precedence(operator)
@@ -115,12 +115,14 @@ class Parser:
 
   def parse_primary(self):
     current = self.tokens.next
-
     if current == None:
       raise Exception("Expected primary expression")
 
     elif self.is_unary_operator(current.text):
       operator = self.tokens._next().text
+      if operator in ('-', '+'):
+        value = self.parse_primary()
+        return UnaryOperator(operator, value)
       value = self.parse_expr(self.get_precedence(operator))
       return UnaryOperator(operator, value)
 
@@ -170,6 +172,8 @@ class Parser:
       return 1
     elif operator in ('*', '/', '%'):
       return 2
+    elif operator in ('^'):
+      return 3
     else:
       return 0
 
