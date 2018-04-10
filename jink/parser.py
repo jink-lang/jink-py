@@ -1,4 +1,4 @@
-from .classes import *
+from .utils.classes import *
 from .utils import future_iter
 FutureIter = future_iter.FutureIter
 
@@ -13,7 +13,7 @@ TYPES = (
 KEYWORDS = (
   'if', 'else', 'elseif',
   'import', 'export',
-  'void', 'return', 'delete',
+  'return', 'delete',
   'true', 'false', 'null'
 )
 

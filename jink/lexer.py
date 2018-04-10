@@ -1,4 +1,4 @@
-from .classes import LexerToken as Token
+from .utils.classes import LexerToken as Token
 from .utils import future_iter
 FutureIter = future_iter.FutureIter
 
@@ -6,13 +6,14 @@ TYPES = (
   'int',
   'float',
   'string',
-  'bool'
+  'bool',
+  'void'
 )
 
 KEYWORDS = (
   'if', 'else', 'elseif',
   'import', 'export',
-  'void', 'return', 'delete',
+  'return', 'delete',
   'true', 'false', 'null'
 )
 
