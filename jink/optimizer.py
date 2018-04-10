@@ -10,7 +10,14 @@ def optimize(ast):
   return optimized
 
 def const_fold(expr):
-  if isinstance(expr, BinaryOperator):
+  if isinstance(expr, UnaryOperator):
+    left = const_fold(expr.value)
+    if isinstance(left, IntegerLiteral):
+      return IntegerLiteral(int(UNOP_EVALS[expr.operator](left.value)))
+    elif isinstance(left, FloatingPointLiteral):
+      return FloatingPointLiteral(UNOP_EVALS[expr.operator](left.value))
+
+  elif isinstance(expr, BinaryOperator):
     left, right = const_fold(expr.left), const_fold(expr.right)
 
     if isinstance(left, IntegerLiteral) and isinstance(right, IntegerLiteral):
@@ -22,7 +29,7 @@ def const_fold(expr):
     elif isinstance(left, StringLiteral) or isinstance(right, StringLiteral):
       if expr.operator != '+':
         raise Exception(f"Only '+' operator can be used with strings.")
-      
+
       if not hasattr(left, 'value') or not hasattr(right, 'value'):
         raise Exception("Tried to concatenate string with non-string value.")
       return StringLiteral(str(left.value) + str(right.value))
