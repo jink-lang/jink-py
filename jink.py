@@ -3,7 +3,7 @@ from jink.lexer import Lexer
 from jink.parser import Parser
 from jink.optimizer import optimize
 from jink.interpreter import Interpreter
-from jink.classes import Environment
+from jink.utils.classes import Environment
 lexer = Lexer()
 parser = Parser()
 interpreter = Interpreter()

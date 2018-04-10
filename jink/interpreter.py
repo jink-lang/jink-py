@@ -1,19 +1,5 @@
-from .classes import *
-
-BINOP_EVALS = {
-  '+': lambda x, y: 0 if x + y is None else x + y,
-  '-': lambda x, y: 0 if x - y is None else x - y,
-  '/': lambda x, y: 0 if x / y is None else x / y,
-  '*': lambda x, y: 0 if x * y is None else x * y,
-  '==': lambda x, y: 'true' if x == y else 'false',
-  '!=': lambda x, y: 'true' if x != y else 'false',
-  '>=': lambda x, y: 'true' if x >= y else 'false',
-  '<=': lambda x, y: 'true' if x <= y else 'false'
-}
-
-UNOP_EVALS = {
-  '++': lambda x: x + 1
-}
+from .utils.classes import *
+from .utils.evals import *
 
 class Interpreter:
   def __init__(self):
