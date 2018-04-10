@@ -1,3 +1,5 @@
+from .evals import *
+
 TYPES = {
   'int': int,
   'float': float,
