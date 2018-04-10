@@ -32,6 +32,9 @@ class Interpreter:
 
     elif isinstance(expr, (StringLiteral, IntegerLiteral, FloatingPointLiteral)):
       return self.unwrap_value(expr)
+    
+    elif isinstance(expr, BooleanLiteral):
+      return True if self.unwrap_value(expr) == 'true' else False
 
     elif isinstance(expr, UnaryOperator):
       value = self.evaluate_top(expr.value)
@@ -100,7 +103,9 @@ class Interpreter:
         if func.return_type and func.return_type != 'void':
           result = self.evaluate([e], scope)[0]
           if result and hasattr(result, '__getitem__') and result['type'] == 'return':
-            if isinstance(result['value'], TYPES[func.return_type]):
+            if isinstance(result['value'], bool):
+              _return = 'true' if result['value'] == True else 'false'
+            elif isinstance(result['value'], TYPES[func.return_type]):
               _return = result['value']
             else:
               raise Exception(f"Function '{func.name}' of return type {func.return_type} returned item of incorrect type: '{result['value']}'.")

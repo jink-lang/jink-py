@@ -111,6 +111,14 @@ class StringLiteral:
     return f'{{StringLiteral {self.value}}}'
   __repr__ = __str__
 
+class BooleanLiteral:
+  __slots__ = ('value')
+  def __init__(self, value):
+    self.value = value
+  def __str__(self):
+    return f'{{BooleanLiteral {self.value}}}'
+  __repr__ = __str__
+
 class IdentLiteral:
   __slots__ = ('name')
   def __init__(self, name):
