@@ -20,14 +20,14 @@ print(out) :: Prints 1337 to the console
 ## Prerequisites
 
 * Python 3.6+
-* pyinstaller (`pip install pyinstaller`)
+* cx_Freeze (Will be installed through `build-executable.bat`)
 
 ## Getting Started
 
 To build an executable in the current directory, run `build-executable.bat` if you're on Windows. Linux support hasn't been added yet. MacOS may work, but hasn't been tested.
 
 ```cmd
-cd build/jink
+cd build/exe.win32-3.6
 jink.exe main.jk
 ```
 

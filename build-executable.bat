@@ -1,9 +1,3 @@
-@echo off
-
-echo Building an executable....
-
-set /p specpath=Enter path of JINK directory:
-
-pyinstaller --specpath=%specpath% jink.py
-
-echo Executable built at %specpath%\build\jink
+pip install cx_Freeze
+python setup.py build_exe
+@echo Look in build/ for the exe file.
