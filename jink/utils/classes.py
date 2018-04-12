@@ -35,6 +35,7 @@ class Environment:
 
     raise Exception(f"Undefined variable: '{name}'.")
 
+  # Can be either definition or reassignment
   def set_var(self, name, type, value, scope=None):
     if not scope:
       scope = self.find_scope(name)
@@ -42,17 +43,31 @@ class Environment:
     if not scope and self.parent:
       raise Exception(f"Undefined variable: '{name}'.")
 
-    if type in TYPES:
+    if name in (scope or self).index:
+      v = self.get_var(name)
+      type = v['type']
+
+    if type == 'int' and isinstance(value, float):
+      raise Exception(f"Tried to assign value '{value}' to variable '{name}' of type {type}.")
+    elif type in TYPES:
       try:
         value = TYPES[type](value)
       except:
-        raise Exception(f"Failed assigning value '{value or 'null'}' to variable '{name}' of type {type}.")
+        raise Exception(f"Tried to assign value '{value or 'null'}' to variable '{name}' of type {type}.")
 
     if name in (scope or self).index:
       self.index[name]['value'] = value
     else:
       (scope or self).index[name] = { 'type': type, 'value': value }
     return value
+
+  # Just definition without assigning a value
+  def def_var(self, name, type, scope):
+    if name in scope.index:
+      raise Exception(f"Variable {name} already exists.")
+
+    self.index[name] = { 'type': type, 'value': 'null' }
+    return 'null'
 
   def def_func(self, name, func):
     self.index[name] = func
@@ -127,6 +142,11 @@ class IdentLiteral:
     self.name = name
   def __str__(self):
     return f'{{IdentLiteral {self.name}}}'
+  __repr__ = __str__
+
+class Null:
+  def __str__(self):
+    return '{{Null}}'
   __repr__ = __str__
 
 class Assignment:

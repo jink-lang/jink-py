@@ -18,9 +18,12 @@ class Interpreter:
 
     elif isinstance(expr, (StringLiteral, IntegerLiteral, FloatingPointLiteral)):
       return self.unwrap_value(expr)
-    
+
     elif isinstance(expr, BooleanLiteral):
       return True if self.unwrap_value(expr) == 'true' else False
+
+    elif isinstance(expr, Null):
+      return { 'type': 'null', 'value': 'null' }
 
     elif isinstance(expr, UnaryOperator):
       value = self.evaluate_top(expr.value)
@@ -32,17 +35,21 @@ class Interpreter:
 
     elif isinstance(expr, Assignment):
       value = self.unwrap_value(self.evaluate_top(expr.value))
-      self.env.set_var(expr.ident.name, expr.type, value, self.env)
-      return value
+      if value is None:
+        return self.env.def_var(expr.ident.name, expr.type, self.env)
+      return self.env.set_var(expr.ident.name, expr.type, value, self.env)
 
     elif isinstance(expr, Conditional):
       if hasattr(expr, 'expression') and expr.expression != None:
-        result = self.evaluate_top(expr.expression)
+        result = self.evaluate_condition(self.evaluate_top(expr.expression))
         if result not in ('true', 'false'):
           raise Exception("Conditional improperly used.")
-        if result == 'true':
+        elif result == 'true':
           return self.evaluate(expr.body, self.env)
-        return self.evaluate_top(expr.else_body[0])
+        elif result == 'false' and expr.else_body:
+          return self.evaluate_top(expr.else_body[0])
+        else:
+          return
       self.evaluate(expr.body, self.env)
 
     elif isinstance(expr, CallExpression):
@@ -55,6 +62,15 @@ class Interpreter:
     elif isinstance(expr, Return):
       result = self.evaluate_top(expr.expression)
       return { 'type': 'return', 'value': self.unwrap_value(result) }
+
+  def evaluate_condition(self, cond):
+    if cond in ('true', 'false'):
+      return cond
+    elif iter(cond) and 'type' in cond:
+      if cond['type'] == 'null':
+        return 'false'
+      elif cond['type'] != 'bool':
+        return 'true'
 
   # Obtain literal values
   def unwrap_value(self, v):
