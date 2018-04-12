@@ -226,7 +226,7 @@ class Parser:
     # Parse else first because it is unlike if/elseif
     if init.text == 'else':
       return Conditional(init.text, None, self.parse_block(), None)
-    
+
     body = []
     else_body = []
     cur = self.tokens.next
