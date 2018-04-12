@@ -12,8 +12,10 @@ def optimize(ast):
 def const_fold(expr):
   if isinstance(expr, UnaryOperator):
     left = const_fold(expr.value)
+
     if isinstance(left, IntegerLiteral):
       return IntegerLiteral(int(UNOP_EVALS[expr.operator](left.value)))
+
     elif isinstance(left, FloatingPointLiteral):
       return FloatingPointLiteral(UNOP_EVALS[expr.operator](left.value))
 
