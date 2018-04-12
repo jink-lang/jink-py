@@ -122,7 +122,7 @@ class Parser:
 
     elif self.is_unary_operator(current.text):
       operator = self.tokens._next().text
-      if operator in ('-', '+'):
+      if operator in ('-', '+', '!'):
         value = self.parse_primary()
         return UnaryOperator(operator, value)
       value = self.parse_expr(self.get_precedence(operator))
@@ -160,6 +160,8 @@ class Parser:
         return BooleanLiteral(keyword)
       elif self.tokens.next.text == '(':
         return self.parse_call(keyword)
+      elif keyword == 'null':
+        return Null()
 
     raise Exception(f"Expected primary expression, got '{current.text}' on line {current.line}")
 

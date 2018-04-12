@@ -144,6 +144,11 @@ class IdentLiteral:
     return f'{{IdentLiteral {self.name}}}'
   __repr__ = __str__
 
+class Null:
+  def __str__(self):
+    return '{{Null}}'
+  __repr__ = __str__
+
 class Assignment:
   __slots__ = ('type', 'ident', 'value')
   def __init__(self, type, ident, value):
