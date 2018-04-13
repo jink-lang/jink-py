@@ -107,12 +107,13 @@ class Lexer:
   # Variables are fun, especially when you name them ridiculous things.
   def parse_ident(self, char):
     ident = char
-    while self.code.next is not None and (self.code.next.isalnum() or self.code.next in ('_', '$')):
+    while self.code.next is not None and (self.code.next.isalnum() or self.code.next == '_'):
       ident += self.code.next
       self.code._next()
       self.line_pos += 1
-
-    if ident in KEYWORDS:
+    if ident == '$' or ident.count('_') == len(ident):
+      raise Exception(f"Invalid identifier name '{ident}'.")
+    elif ident in KEYWORDS:
       return Token('keyword', ident, self.line, self.pos)
     return Token('ident', ident, self.line, self.pos)
 
