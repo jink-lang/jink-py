@@ -111,9 +111,7 @@ class Lexer:
       ident += self.code.next
       self.code._next()
       self.line_pos += 1
-    if ident == '$' or ident.count('_') == len(ident):
-      raise Exception(f"Invalid identifier name '{ident}'.")
-    elif ident in KEYWORDS:
+    if ident in KEYWORDS:
       return Token('keyword', ident, self.line, self.pos)
     return Token('ident', ident, self.line, self.pos)
 
