@@ -25,6 +25,16 @@ class Environment:
         return scope
       scope = scope.parent
 
+  def validate_type(self, name, _type, value):
+    if _type == 'int' and isinstance(value, float):
+      raise Exception(f"Tried to assign value '{value}' to variable '{name}' of type {_type}.")
+    elif _type in TYPES:
+      try:
+        value = TYPES[_type](value)
+      except:
+        raise Exception(f"Tried to assign value '{value or 'null'}' to variable '{name}' of type {_type}.")
+    return value
+
   def get_var(self, name):
     scope = self.find_scope(name)
     if not scope and self.parent:
@@ -36,37 +46,28 @@ class Environment:
     raise Exception(f"{name} is not defined.")
 
   # Can be either definition or reassignment
-  def set_var(self, name, type, value, scope=None):
+  def set_var(self, name, _type, value, scope=None):
     if not scope:
       scope = self.find_scope(name)
 
-    if not scope and self.parent:
-      raise Exception(f"{name} is not defined.")
-
     if name in (scope or self).index:
       v = self.get_var(name)
-      type = v['type']
-
-    if type == 'int' and isinstance(value, float):
-      raise Exception(f"Tried to assign value '{value}' to variable '{name}' of type {type}.")
-    elif type in TYPES:
-      try:
-        value = TYPES[type](value)
-      except:
-        raise Exception(f"Tried to assign value '{value or 'null'}' to variable '{name}' of type {type}.")
-
-    if name in (scope or self).index:
+      _type = v['type']
+      value = self.validate_type(name, _type, value)
       self.index[name]['value'] = value
     else:
-      (scope or self).index[name] = { 'type': type, 'value': value }
+      if not _type:
+        raise Exception(f"{name} is not defined.")
+      value = self.validate_type(name, _type, value)
+      (scope or self).index[name] = { 'type': _type, 'value': value }
     return value
 
   # Just definition without assigning a value
-  def def_var(self, name, type, scope):
+  def def_var(self, name, _type, scope):
     if name in scope.index:
       raise Exception(f"Variable {name} already exists.")
 
-    self.index[name] = { 'type': type, 'value': 'null' }
+    self.index[name] = { 'type': _type, 'value': 'null' }
     return 'null'
 
   def def_func(self, name, func):
