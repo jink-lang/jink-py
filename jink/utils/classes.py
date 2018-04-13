@@ -28,12 +28,12 @@ class Environment:
   def get_var(self, name):
     scope = self.find_scope(name)
     if not scope and self.parent:
-      raise Exception(f"Undefined variable: '{name}'.")
+      raise Exception(f"{name} is not defined.")
 
     if name in (scope or self).index:
       return self.index[name]
 
-    raise Exception(f"Undefined variable: '{name}'.")
+    raise Exception(f"{name} is not defined.")
 
   # Can be either definition or reassignment
   def set_var(self, name, type, value, scope=None):
@@ -41,7 +41,7 @@ class Environment:
       scope = self.find_scope(name)
 
     if not scope and self.parent:
-      raise Exception(f"Undefined variable: '{name}'.")
+      raise Exception(f"{name} is not defined.")
 
     if name in (scope or self).index:
       v = self.get_var(name)
