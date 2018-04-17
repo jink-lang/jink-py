@@ -115,7 +115,7 @@ class Lexer:
       return Token('keyword', ident, self.line, self.pos)
     return Token('ident', ident, self.line, self.pos)
 
-  # 2 + 2 = 4 - 1 = 3 big maffs.
+  # 2 + 2 = 4 - 1 = 3
   def parse_operator(self, operator):
     line_start = self.line_pos
     start = self.pos

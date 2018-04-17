@@ -95,7 +95,6 @@ class Parser:
       raise Exception(f"Expected keyword, got '{init.text}' on line {init.line}")
 
   def parse_expr(self, precedence=0):
-    self.skip_newlines()
     left = self.parse_primary()
     current = self.tokens.next
 
@@ -221,7 +220,8 @@ class Parser:
 
   # Return parsing
   def parse_return(self):
-    self.tokens._next()
+    if self.tokens._next().type == 'newline':
+      return Return(None)
     expr = self.parse_expr()
     return Return(expr)
 
@@ -255,17 +255,12 @@ class Parser:
     if self.tokens.next.text == '{':
       self.tokens._next()
       self.skip_newlines()
-      while True:
-        if self.tokens.next.text == '}':
-          self.tokens._next()
-          break
+      while self.tokens.next is not None and self.tokens.next.text is not '}':
         body.append(self.parse_top())
         if self.tokens.next.type == 'newline':
           self.skip_newlines()
-        elif self.tokens._next().text == '}':
-          break
-        else:
-          raise Exception(f"Expected '}}', got {self.tokens.next.text} on line {self.tokens.next.line}")
+      if self.tokens._next() == None:
+        raise Exception(f"Expected '}}', got {self.tokens.next.text} on line {self.tokens.next.line}")
 
     # One or two lined
     # ex: string say_hi() return print("Hi")
@@ -277,5 +272,5 @@ class Parser:
       if self.tokens.next.type == 'newline':
         raise Exception(f"Empty function body on line {init.line}")
       body.append(self.parse_top())
-    
+
     return body
