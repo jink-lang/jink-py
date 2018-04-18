@@ -115,6 +115,7 @@ class Parser:
     return left
 
   def parse_primary(self):
+    self.skip_newlines()
     current = self.tokens.next
     if current == None:
       raise Exception("Expected primary expression")

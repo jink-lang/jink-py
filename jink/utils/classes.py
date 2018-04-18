@@ -7,13 +7,10 @@ TYPES = {
 }
 
 class Environment:
-  def __init__(self, parent=None):
-    self.index = parent.index if parent else {}
+  def __init__(self, parent=None, _id=0):
+    self._id = parent._id + 1 if parent else _id
+    self.index = {}
     self.parent = parent
-
-    # Initialize environment with a few primitive functions
-    self.def_func('print', lambda args: print('\n'.join([str(x) for x in args]) or 'null'))
-    self.def_func('string', lambda args: [str(x or 'null') for x in args][0] if len(args) == 1 else [str(x or 'null') for x in args])
 
   def extend(self):
     return Environment(self)
@@ -40,17 +37,14 @@ class Environment:
     if not scope and self.parent:
       raise Exception(f"{name} is not defined.")
 
-    if name in (scope or self).index:
-      return self.index[name]
+    elif name in (scope or self).index:
+      return (scope or self).index[name]
 
     raise Exception(f"{name} is not defined.")
 
   # Can be either definition or reassignment
-  def set_var(self, name, _type, value, scope=None):
-    if not scope:
-      scope = self.find_scope(name)
-
-    if name in (scope or self).index:
+  def set_var(self, name, _type, value):
+    if name in self.index:
       v = self.get_var(name)
       _type = v['type']
       value = self.validate_type(name, _type, value)
@@ -59,12 +53,12 @@ class Environment:
       if not _type:
         raise Exception(f"{name} is not defined.")
       value = self.validate_type(name, _type, value)
-      (scope or self).index[name] = { 'type': _type, 'value': value }
+      self.index[name] = { 'type': _type, 'value': value }
     return value
 
   # Just definition without assigning a value
-  def def_var(self, name, _type, scope):
-    if name in scope.index:
+  def def_var(self, name, _type):
+    if name in self.index:
       raise Exception(f"Variable {name} already exists.")
 
     self.index[name] = { 'type': _type, 'value': 'null' }
@@ -75,7 +69,7 @@ class Environment:
     return func
 
   def __str__(self):
-    return str(self.index)
+    return f"{self.parent or 'null'}->{self._id}:{self.index}"
 
 
 class LexerToken:

@@ -36,8 +36,8 @@ class Interpreter:
     elif isinstance(expr, Assignment):
       value = self.unwrap_value(self.evaluate_top(expr.value))
       if value is None:
-        return self.env.def_var(expr.ident.name, expr.type, self.env)
-      return self.env.set_var(expr.ident.name, expr.type, value, self.env)
+        return self.env.def_var(expr.ident.name, expr.type)
+      return self.env.set_var(expr.ident.name, expr.type, value)
 
     elif isinstance(expr, Conditional):
       if hasattr(expr, 'expression') and expr.expression != None:
@@ -53,8 +53,9 @@ class Interpreter:
       self.evaluate(expr.body, self.env)
 
     elif isinstance(expr, CallExpression):
+      scope = self.env.extend()
       func = self.evaluate_top(expr.name)
-      return func([self.unwrap_value(self.evaluate_top(arg)) for arg in expr.args])
+      return func(scope, [self.unwrap_value(self.evaluate_top(arg)) for arg in expr.args])
 
     elif isinstance(expr, Function):
       return self.make_function(expr)
@@ -72,20 +73,9 @@ class Interpreter:
       elif cond['type'] != 'bool':
         return 'true'
 
-  # Obtain literal values
-  def unwrap_value(self, v):
-    if hasattr(v, 'value'):
-      return v.value
-    elif hasattr(v, '__getitem__') and not isinstance(v, (str, list)):
-      return v['value']
-    else:
-      return v
-
   # Make a function
   def make_function(self, func):
-    def function(*args):
-      # Create a scope for the function parameters, arguments and body
-      scope = self.env.extend()
+    def function(scope, *args):
       params = func.params
       # Tuple from *args contains the list of args we pass as its first item
       args = args[0]
@@ -94,9 +84,10 @@ class Interpreter:
         raise Exception(f"Function '{func.name}' takes {len(params)} arguments but {len(args)} were given.")
 
       for p, a in zip(params, args):
-        if p and a:
+        value = a if a != None else p.default or 'null'
+        if value != None:
           try:
-            scope.set_var(p.name, p.type, a or p.default or 'null', scope)
+            scope.set_var(p.name, p.type, value)
           except:
             raise Exception(f"Improper function parameter or call argument at function '{func.name}'.")
 
@@ -104,21 +95,36 @@ class Interpreter:
       for e in func.body:
         if func.return_type and func.return_type != 'void':
           result = self.evaluate([e], scope)[0]
-          if result and hasattr(result, '__getitem__') and result['type'] == 'return':
+          if isinstance(result, list):
+            result = result[0]
+          if result and hasattr(result, '__getitem__') and not isinstance(result, str) and result['type'] == 'return':
             if isinstance(result['value'], bool):
               _return = 'true' if result['value'] == True else 'false'
+            elif isinstance(result['value'], (int, float)):
+              _return = result['value'] if result['value'] != None else 0
             elif isinstance(result['value'], TYPES[func.return_type]):
               _return = result['value']
             else:
-              raise Exception(f"Function '{func.name}' of return type {func.return_type} returned item of incorrect type: '{result['value']}'.")
+              raise Exception(f"Function '{func.name}' of return type {func.return_type} returned item of incorrect type: '{result['value'] or 'null'}'.")
+            break
         else:
           self.evaluate([e], scope)
-
+      
+      self.env = self.env.parent
       if _return is None or (isinstance(_return, list) and (_return[0] in (None, 'null') or _return[0]['value'] is None)):
         return 'null'
       else:
         return _return
 
-    env = self.env.extend()
-    env.def_func(func.name, function)
+    # env = self.env.extend()
+    self.env.def_func(func.name, function)
     return function
+
+  # Obtain literal values
+  def unwrap_value(self, v):
+    if hasattr(v, 'value'):
+      return v.value
+    elif hasattr(v, '__getitem__') and not isinstance(v, (str, list)):
+      return v['value']
+    else:
+      return v
