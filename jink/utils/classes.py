@@ -7,13 +7,14 @@ TYPES = {
 }
 
 class Environment:
-  def __init__(self, parent=None, _id=0):
-    self._id = parent._id + 1 if parent else _id
+  def __init__(self, parent=None, s_type=None):
+    self._id = parent._id + 1 if parent else 0
     self.index = {}
     self.parent = parent
+    self.type = s_type
 
-  def extend(self):
-    return Environment(self)
+  def extend(self, s_type):
+    return Environment(self, s_type)
 
   def find_scope(self, name):
     scope = self
@@ -44,7 +45,8 @@ class Environment:
 
   # Can be either definition or reassignment
   def set_var(self, name, _type, value):
-    if name in self.index:
+    scope = self.find_scope(name)
+    if not scope and self.parent:
       v = self.get_var(name)
       _type = v['type']
       value = self.validate_type(name, _type, value)

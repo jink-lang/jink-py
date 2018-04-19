@@ -1,6 +1,5 @@
 from .utils.classes import LexerToken as Token
-from .utils import future_iter
-FutureIter = future_iter.FutureIter
+from .utils.future_iter import FutureIter
 
 TYPES = (
   'int',
