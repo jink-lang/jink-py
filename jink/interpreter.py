@@ -53,7 +53,7 @@ class Interpreter:
       self.evaluate(expr.body, self.env)
 
     elif isinstance(expr, CallExpression):
-      scope = self.env.extend()
+      scope = self.env.extend('call')
       func = self.evaluate_top(expr.name)
       return func(scope, [self.unwrap_value(self.evaluate_top(arg)) for arg in expr.args])
 
@@ -67,7 +67,9 @@ class Interpreter:
   def evaluate_condition(self, cond):
     if cond in ('true', 'false'):
       return cond
-    elif iter(cond) and 'type' in cond:
+    elif cond in (True, False):
+      return 'true' if True else 'false'
+    elif 'type' in cond:
       if cond['type'] == 'null':
         return 'false'
       elif cond['type'] != 'bool':
@@ -75,14 +77,15 @@ class Interpreter:
 
   # Make a function
   def make_function(self, func):
-    def function(scope, *args):
+    def function(scope, args):
       params = func.params
-      # Tuple from *args contains the list of args we pass as its first item
-      args = args[0]
 
+      # Exception upon overload
       if len(args) > len(params):
         raise Exception(f"Function '{func.name}' takes {len(params)} arguments but {len(args)} were given.")
 
+      # Apply arguments to this call's scope, otherwise use function defaults if any
+      # TODO Exception handling in the case of an argument not passed when there is no default
       for p, a in zip(params, args):
         value = a if a != None else p.default or 'null'
         if value != None:
@@ -96,7 +99,7 @@ class Interpreter:
         if func.return_type and func.return_type != 'void':
           result = self.evaluate([e], scope)[0]
           if isinstance(result, list):
-            result = result[0]
+            result = result[0] if len(result) > 0 else []
           if result and hasattr(result, '__getitem__') and not isinstance(result, str) and result['type'] == 'return':
             if isinstance(result['value'], bool):
               _return = 'true' if result['value'] == True else 'false'
@@ -109,14 +112,15 @@ class Interpreter:
             break
         else:
           self.evaluate([e], scope)
-      
+
+      # Step back out of this scope
       self.env = self.env.parent
+
       if _return is None or (isinstance(_return, list) and (_return[0] in (None, 'null') or _return[0]['value'] is None)):
         return 'null'
       else:
         return _return
 
-    # env = self.env.extend()
     self.env.def_func(func.name, function)
     return function
 

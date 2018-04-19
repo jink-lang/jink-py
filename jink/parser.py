@@ -1,6 +1,5 @@
 from .utils.classes import *
-from .utils import future_iter
-FutureIter = future_iter.FutureIter
+from .utils.future_iter import FutureIter
 
 TYPES = (
   'int',
