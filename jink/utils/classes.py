@@ -35,22 +35,22 @@ class Environment:
 
   def get_var(self, name):
     scope = self.find_scope(name)
-    if not scope and self.parent:
+    if not scope:
       raise Exception(f"{name} is not defined.")
 
-    elif name in (scope or self).index:
-      return (scope or self).index[name]
+    elif name in scope.index:
+      return scope.index[name]
 
     raise Exception(f"{name} is not defined.")
 
   # Can be either definition or reassignment
   def set_var(self, name, _type, value):
     scope = self.find_scope(name)
-    if not scope and self.parent:
-      v = self.get_var(name)
+    if scope:
+      v = scope.get_var(name)
       _type = v['type']
       value = self.validate_type(name, _type, value)
-      self.index[name]['value'] = value
+      scope.index[name]['value'] = value
     else:
       if not _type:
         raise Exception(f"{name} is not defined.")

@@ -18,12 +18,13 @@ if len(sys.argv) > 1:
   if not sys.argv[1].endswith('.jk'):
     sys.argv[1] += '.jk'
   code = open(sys.argv[1]).read()
+
+  if not code:
+    raise Exception(f"Error reading file {sys.argv[1]}")
+
+  AST = optimize(parser.parse(lexer.parse(code)))
+  interpreter.evaluate(AST, env)
 else:
   repl = REPL(sys.stdin, sys.stdout, env)
-  repl.mainLoop()
-
-if not code:
-  raise Exception("Error in file reading.")
-
-AST = optimize(parser.parse(lexer.parse(code)))
-interpreter.evaluate(AST, env)
+  while True:
+    repl.main_loop()

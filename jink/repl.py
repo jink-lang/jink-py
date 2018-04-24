@@ -15,7 +15,7 @@ class REPL:
     self.parser = parser
     self.interpreter = interpreter
 
-  def mainLoop(self):
+  def main_loop(self):
     while True:
       self.stdout.write("> ")
       self.stdout.flush()
@@ -29,11 +29,17 @@ class REPL:
 
   def run(self, code):
     try:
-      AST = optimize(self.parser.parse(self.lexer.parse(code)))
-      e = self.interpreter.evaluate(AST, self.env)
-      if len(e) == 1:
-        print(e[0])
+      lexed = self.lexer.parse(code)
+      if len(lexed) == 1 and lexed[0].type == 'ident':
+        var = self.env.get_var(lexed[0].text)
+        ret = var['value'] if var != None and isinstance(var, (str, list, tuple)) else var or 'null'
+        print(ret)
       else:
-        print(e[0])
+        AST = optimize(self.parser.parse(lexed))
+        e = self.interpreter.evaluate(AST, self.env)
+        if len(e) == 1:
+          print(e[0] if e[0] is not None else 'null')
+        else:
+          print(e[0] if e[0] is not None else 'null')
     except Exception as exception:
       print("Exception: {}".format(exception))
