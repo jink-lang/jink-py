@@ -23,7 +23,7 @@ OPERATORS = (
   '+', '-', '*', '/',
   '%', '>', '<', '|',
   '&', '^', '~', '#',
-  '>=', '<=', '==', '++', '--'
+  '>=', '<=', '==', '++', '--',
   '!=', '&&', '||'
 )
 
@@ -70,6 +70,8 @@ class Lexer:
           self.process_comment()
         else:
           yield Token('colon', ':', self.line, self.pos)
+      elif char == ';':
+        yield Token('semicolon', ';', self.line, self.pos)
       elif char == '(':
         yield Token('lparen', '(', self.line, self.pos)
       elif char == ')':
