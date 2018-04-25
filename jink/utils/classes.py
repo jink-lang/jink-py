@@ -24,7 +24,14 @@ class Environment:
       scope = scope.parent
 
   def validate_type(self, name, _type, value):
-    if _type == 'int' and isinstance(value, float):
+    if value == 'null':
+      return value
+    elif _type == 'int' and isinstance(value, float):
+      raise Exception(f"Tried to assign value '{value}' to variable '{name}' of type {_type}.")
+    elif _type == 'string' and (isinstance(value, (float, int, bool))):
+      if isinstance(value, bool):
+        value = str(value).lower()
+      value = 'true' if value == True else 'false' if value == False else value
       raise Exception(f"Tried to assign value '{value}' to variable '{name}' of type {_type}.")
     elif _type in TYPES:
       try:
@@ -46,25 +53,23 @@ class Environment:
   # Can be either definition or reassignment
   def set_var(self, name, _type, value):
     scope = self.find_scope(name)
+
+    # Assignments
     if scope:
       v = scope.get_var(name)
+      if _type:
+        raise Exception(f"Variable {name} already exists.")
       _type = v['type']
       value = self.validate_type(name, _type, value)
       scope.index[name]['value'] = value
+    
+    # Definitions
     else:
       if not _type:
         raise Exception(f"{name} is not defined.")
       value = self.validate_type(name, _type, value)
       self.index[name] = { 'type': _type, 'value': value }
     return value
-
-  # Just definition without assigning a value
-  def def_var(self, name, _type):
-    if name in self.index:
-      raise Exception(f"Variable {name} already exists.")
-
-    self.index[name] = { 'type': _type, 'value': 'null' }
-    return 'null'
 
   def def_func(self, name, func):
     self.index[name] = func
