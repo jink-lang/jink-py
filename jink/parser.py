@@ -116,7 +116,7 @@ class Parser:
 
       current = self.tokens.next
 
-    if current.type == 'semicolon':
+    if current and current.type == 'semicolon':
       self.tokens._next()
 
     return left
