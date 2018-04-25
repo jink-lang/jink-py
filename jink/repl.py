@@ -32,7 +32,7 @@ class REPL:
       lexed = self.lexer.parse(code)
       if len(lexed) == 1 and lexed[0].type == 'ident':
         var = self.env.get_var(lexed[0].text)
-        ret = var['value'] if var != None and isinstance(var, (str, list, tuple)) else var or 'null'
+        ret = var['value'] if var != None and isinstance(var, (dict)) else var or 'null'
         print(ret)
       else:
         AST = optimize(self.parser.parse(lexed))
