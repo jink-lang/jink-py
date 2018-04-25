@@ -85,17 +85,23 @@ class Interpreter:
         raise Exception(f"Function '{func.name}' takes {len(params)} arguments but {len(args)} were given.")
 
       # Apply arguments to this call's scope, otherwise use function defaults if any
-      # TODO Exception handling in the case of an argument not passed when there is no default
-      for p, a in zip(params, args):
+      i = 0
+      for p in params:
         default = None
         if p.default:
           default = self.unwrap_value(p.default)
-        value = a if a not in (None, 'null') else default or 'null'
+
+        if len(args) > i:
+          value = args[i] if args[i] not in (None, 'null') else default or 'null'
+        else:
+          value = default or 'null'
+
         if value != None:
           try:
             scope.set_var(p.name, p.type, value)
           except:
             raise Exception(f"Improper function parameter or call argument at function '{func.name}'.")
+        i += 1
 
       _return = None
       for e in func.body:
