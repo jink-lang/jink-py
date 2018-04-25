@@ -31,7 +31,6 @@ class Environment:
     elif _type == 'string' and (isinstance(value, (float, int, bool))):
       if isinstance(value, bool):
         value = str(value).lower()
-      value = 'true' if value == True else 'false' if value == False else value
       raise Exception(f"Tried to assign value '{value}' to variable '{name}' of type {_type}.")
     elif _type in TYPES:
       try:
@@ -57,12 +56,12 @@ class Environment:
     # Assignments
     if scope:
       v = scope.get_var(name)
-      if _type:
+      if _type and _type != v['type']:
         raise Exception(f"Variable {name} already exists.")
       _type = v['type']
       value = self.validate_type(name, _type, value)
       scope.index[name]['value'] = value
-    
+
     # Definitions
     else:
       if not _type:
