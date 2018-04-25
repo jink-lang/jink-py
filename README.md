@@ -20,11 +20,33 @@ print(out) :: Prints 1337 to the console
 ## Prerequisites
 
 * Python 3.6+
-* cx_Freeze (Will be installed through `build-executable.bat`)
+* cx_Freeze (Only if you want to build an executable. Will be installed through `build-executable.bat`)
 
 ## Getting Started
 
-To build an executable in the current directory, run `build-executable.bat` if you're on Windows. Linux support hasn't been added yet. MacOS may work, but hasn't been tested.
+Assuming you have Python 3.6 or newer, you can get started right away!
+
+To launch the REPL:
+
+```cmd
+python jink.py
+```
+
+To execute your own files:
+
+```cmd
+python jink.py C:/path/to/file.jk
+```
+
+To execute the example files:
+
+```cmd
+python jink.py ./examples/01-hello_world.jk
+```
+
+### Building
+
+For Windows users, run `build-executable.bat`. Linux support has not been added yet, and Mac OS X has not been tested.
 
 ```cmd
 cd build/exe.win32-3.6
