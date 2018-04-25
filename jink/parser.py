@@ -62,9 +62,9 @@ class Parser:
 
         # Assignments
         if nxt.text == '=' and init.text != 'void':
-          return self.parse_assignment(init.text, cur.text, nxt.type)
-        elif nxt.type in ('newline'):
-          return self.parse_assignment(init.text, cur.text, nxt.type)
+          return self.parse_assignment(init.text, cur.text, nxt)
+        elif nxt.type in ('newline', 'semicolon'):
+          return self.parse_assignment(init.text, cur.text, nxt)
 
         # Function declarations
         elif nxt.text == '(':
@@ -85,10 +85,15 @@ class Parser:
     # Return statements
     elif init.text == 'return':
       return self.parse_return()
-    
+
     # Conditionals
     elif init.text == 'if':
       return self.parse_conditional()
+
+    # Null
+    elif init.text == 'null':
+      self.tokens._next()
+      return Null()
     
     else:
       raise Exception(f"Expected keyword, got '{init.text}' on line {init.line}")
@@ -97,19 +102,22 @@ class Parser:
     left = self.parse_primary()
     current = self.tokens.next
 
-    while current and current.type == 'operator' and self.get_precedence(current.text) >= precedence:
-      operator = self.tokens._next().text
-      if operator in ('++', '--'):
-        return UnaryOperator(operator + ':post', left)
+    while current and current.type == 'operator' and self.get_precedence(current) >= precedence:
+      operator = self.tokens._next()
+      if operator.text in ('++', '--'):
+        return UnaryOperator(operator.text + ':post', left)
 
       next_precedence = self.get_precedence(operator)
       if self.is_left_associative(operator):
         next_precedence += 1
 
       right = self.parse_expr(next_precedence)
-      left = BinaryOperator(operator, left, right)
+      left = BinaryOperator(operator.text, left, right)
 
       current = self.tokens.next
+
+    if current.type == 'semicolon':
+      self.tokens._next()
 
     return left
 
@@ -119,13 +127,13 @@ class Parser:
     if current == None:
       raise Exception("Expected primary expression")
 
-    elif self.is_unary_operator(current.text):
-      operator = self.tokens._next().text
-      if operator in ('-', '+', '!'):
+    elif self.is_unary_operator(current):
+      operator = self.tokens._next()
+      if operator.text in ('-', '+', '!'):
         value = self.parse_primary()
-        return UnaryOperator(operator, value)
+        return UnaryOperator(operator.text, value)
       value = self.parse_expr(self.get_precedence(operator))
-      return UnaryOperator(operator, value)
+      return UnaryOperator(operator.text, value)
 
     elif current.text == '(':
       self.tokens._next()
@@ -164,25 +172,31 @@ class Parser:
 
     raise Exception(f"Expected primary expression, got '{current.text}' on line {current.line}")
 
-  def is_unary_operator(self, operator):
-    return operator in ('-', '+', '++', '--', '!') and not isinstance(operator, str)
+  def is_unary_operator(self, token):
+    if hasattr(token, 'type'):
+      if token.type == 'string':
+        return False
+    return token.text in ('-', '+', '++', '--', '!')
 
-  def is_left_associative(self, operator):
-    return operator not in ('++', '--', '+=', '-=', '=') and not isinstance(operator, str)
+  def is_left_associative(self, token):
+    if hasattr(token, 'type'):
+      if token.type == 'string':
+        return False
+    return token.text not in ('++', '--', '+=', '-=', '=')
 
-  def get_precedence(self, operator):
-    if operator in ('+', '-'):
+  def get_precedence(self, token):
+    if token.text in ('+', '-'):
       return 1
-    elif operator in ('*', '/', '%'):
+    elif token.text in ('*', '/', '%'):
       return 2
-    elif operator in ('^'):
+    elif token.text in ('^'):
       return 3
     else:
       return 0
 
   def parse_assignment(self, type, name, nxt):
     self.tokens._next()
-    if nxt == 'newline':
+    if nxt.type in ('newline', 'semicolon'):
       return Assignment(type, IdentLiteral(name), None)
     expr = self.parse_expr()
     return Assignment(type, IdentLiteral(name), expr)
@@ -220,7 +234,8 @@ class Parser:
 
   # Return parsing
   def parse_return(self):
-    if self.tokens._next().type == 'newline':
+    self.tokens._next()
+    if self.tokens.next.type == 'newline':
       return Return(None)
     expr = self.parse_expr()
     return Return(expr)
