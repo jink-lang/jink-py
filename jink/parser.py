@@ -165,10 +165,10 @@ class Parser:
     raise Exception(f"Expected primary expression, got '{current.text}' on line {current.line}")
 
   def is_unary_operator(self, operator):
-    return operator in ('-', '+', '++', '--', '!')
+    return operator in ('-', '+', '++', '--', '!') and not isinstance(operator, str)
 
   def is_left_associative(self, operator):
-    return operator not in ('++', '--', '+=', '-=', '=')
+    return operator not in ('++', '--', '+=', '-=', '=') and not isinstance(operator, str)
 
   def get_precedence(self, operator):
     if operator in ('+', '-'):
