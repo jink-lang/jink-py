@@ -87,7 +87,10 @@ class Interpreter:
       # Apply arguments to this call's scope, otherwise use function defaults if any
       # TODO Exception handling in the case of an argument not passed when there is no default
       for p, a in zip(params, args):
-        value = a if a != None else p.default or 'null'
+        default = None
+        if p.default:
+          default = self.unwrap_value(p.default)
+        value = a if a not in (None, 'null') else default or 'null'
         if value != None:
           try:
             scope.set_var(p.name, p.type, value)
