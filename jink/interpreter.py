@@ -92,7 +92,7 @@ class Interpreter:
         if len(args) > i:
           value = args[i] if args[i] not in (None, 'null') else default or 'null'
         else:
-          value = default or 'null'
+          value = default if default not in (None, 'null') else 'null'
 
         if value != None:
           try:
