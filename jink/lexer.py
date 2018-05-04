@@ -145,7 +145,8 @@ class Lexer:
         nxt = self.code._next()
 
         # Newline is a special case
-        if nxt == '\n':
+        if nxt == 'n':
+          string += "\n"
           self.line += 1
           self.line_pos = 0
 
