@@ -35,7 +35,7 @@ class Interpreter:
 
     elif isinstance(expr, Assignment):
       value = self.unwrap_value(self.evaluate_top(expr.value))
-      return self.env.set_var(expr.ident.name, expr.type, value or 'null')
+      return self.env.set_var(expr.ident.name, expr.type, value if value != None else 'null')
 
     elif isinstance(expr, Conditional):
       if hasattr(expr, 'expression') and expr.expression != None:
