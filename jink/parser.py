@@ -235,6 +235,9 @@ class Parser:
   # Return parsing
   def parse_return(self):
     self.tokens._next()
+    if self.tokens.next.type == 'semicolon':
+      self.tokens._next()
+      return Return(None)
     if self.tokens.next.type == 'newline':
       return Return(None)
     expr = self.parse_expr()
