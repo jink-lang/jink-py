@@ -103,22 +103,24 @@ class Interpreter:
 
       _return = None
       for e in func.body:
-        if func.return_type and func.return_type != 'void':
-          result = self.evaluate([e], scope)[0]
-          if isinstance(result, list):
-            result = result[0] if len(result) > 0 else []
-          if result and hasattr(result, '__getitem__') and not isinstance(result, str) and result['type'] == 'return':
-            if isinstance(result['value'], bool):
-              _return = 'true' if result['value'] == True else 'false'
-            elif isinstance(result['value'], (int, float)):
-              _return = result['value'] if result['value'] != None else 0
-            elif isinstance(result['value'], TYPES[func.return_type]):
-              _return = result['value']
+        result = self.evaluate([e], scope)[0]
+        if isinstance(result, list):
+          result = result[0] if len(result) > 0 else []
+        if result and isinstance(result, dict) and result['type'] == 'return':
+          if func.return_type == 'void':
+            if not result['value']:
+              break
             else:
-              raise Exception(f"Function '{func.name}' of return type {func.return_type} returned item of incorrect type: '{result['value'] or 'null'}'.")
-            break
-        else:
-          self.evaluate([e], scope)
+              raise Exception(f"Void function '{func.name}' returned item.")
+          elif isinstance(result['value'], bool):
+            _return = 'true' if result['value'] == True else 'false'
+          elif isinstance(result['value'], (int, float)):
+            _return = result['value'] if result['value'] != None else 0
+          elif isinstance(result['value'], TYPES[func.return_type]):
+            _return = result['value']
+          else:
+            raise Exception(f"Function '{func.name}' of return type {func.return_type} returned item of incorrect type: '{result['value'] or 'null'}'.")
+          break
 
       # Step back out of this scope
       self.env = self.env.parent
