@@ -19,12 +19,13 @@ KEYWORDS = (
 KEYWORDS = KEYWORDS + TYPES
 
 OPERATORS = (
-  '.', '=', '!', '?',
-  '+', '-', '*', '/',
-  '%', '>', '<', '|',
-  '&', '^', '~', '#',
-  '>=', '<=', '==', '++', '--',
-  '!=', '&&', '||'
+  '.', '::', '|',
+  '=', '!', '?', ':',
+  '+', '-', '*', '/', '%', '^',
+  '&', '~', '#',
+  '>', '<', '>=', '<=', '==',
+  '!=', '&&', '||',
+  '++', '--'
 )
 
 # One lexer boi
@@ -65,11 +66,14 @@ class Lexer:
           self.line += 1
           yield Token('newline', 'newline', self.line, self.pos)
 
-      elif char == ':':
-        if self.code.next in [':', '>']:
+      # Comments
+      elif char == '/':
+        if self.code.next in ['/', '*']:
           self.process_comment()
         else:
-          yield Token('colon', ':', self.line, self.pos)
+          yield self.parse_operator(char)
+      # elif char == ':':
+      #   yield Token('colon', ':', self.line, self.pos)
       elif char == ';':
         yield Token('semicolon', ';', self.line, self.pos)
       elif char == '(':
@@ -193,19 +197,19 @@ class Lexer:
   def process_comment(self):
     cur = self.code.next
     # Single-line comment
-    if self.code.next == ':':
+    if self.code.next == '/':
       while not self.code.next in ('\r', '\n', None):
         self.line_pos += 1
         self.code._next()
     # Multi-line comment
-    elif self.code.next == '>':
-      while self.code.next is not None and (cur != '<' and self.code.next != ':'):
+    elif self.code.next == '*':
+      while self.code.next is not None and (cur != '*' and self.code.next != '/'):
         self.line_pos += 1
         if self.code.next in ('\r', '\n'):
           self.line_pos = 0
           self.line += 1
         cur = self.code._next()
 
-      if self.code.next is None or self.code.next is not ':':
+      if self.code.next is None or self.code.next is not '/':
         raise Exception('A multi-line comment was not closed.')
       self.code._next()
