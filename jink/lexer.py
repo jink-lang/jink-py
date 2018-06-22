@@ -68,12 +68,10 @@ class Lexer:
 
       # Comments
       elif char == '/':
-        if self.code.next in ['/', '*']:
+        if self.code.next in ('/', '*'):
           self.process_comment()
         else:
           yield self.parse_operator(char)
-      # elif char == ':':
-      #   yield Token('colon', ':', self.line, self.pos)
       elif char == ';':
         yield Token('semicolon', ';', self.line, self.pos)
       elif char == '(':
@@ -98,7 +96,7 @@ class Lexer:
       elif char.isalpha() or char in ('_', '$'):
         yield self.parse_ident(char)
 
-      elif char.isdigit() or char == '.':
+      elif char.isdigit():
         yield self.parse_number(char)
 
       elif char in OPERATORS:
@@ -202,8 +200,8 @@ class Lexer:
         self.line_pos += 1
         self.code._next()
     # Multi-line comment
-    elif self.code.next == '*':
-      while self.code.next is not None and (cur != '*' and self.code.next != '/'):
+    elif self.code._next() == '*':
+      while self.code.next is not None and (f"{cur}{self.code.next}" != '*/'):
         self.line_pos += 1
         if self.code.next in ('\r', '\n'):
           self.line_pos = 0
