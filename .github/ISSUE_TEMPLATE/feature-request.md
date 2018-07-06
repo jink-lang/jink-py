@@ -10,7 +10,7 @@ A clear + concise description of what you want to happen.
 A clear and concise description of any alternative solutions or features you've considered.
 
 **Screenshots:**  
-If applicable, add screenshots to help explain the feature you think'd be a good addition to this project.
+If applicable, add screenshots to help explain the feature you think would be a good addition to this project.
 
 **Additional context:**  
 Add any other context or screenshots about the feature request here.
