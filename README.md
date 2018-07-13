@@ -24,7 +24,7 @@ fun example_function(input) {
     return ++input
 }
 
-let output = example_func(1336)
+let output = example_function(1336)
 print(output) // Prints 1337 to the console!
 ```
 
