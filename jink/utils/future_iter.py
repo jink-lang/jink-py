@@ -9,11 +9,11 @@ class FutureIter:
 
   def _future(self):
     try:
-      self.next = next(self._iter)
+      self.current = next(self._iter)
     except StopIteration:
-      self.next = None
+      self.current = None
 
   def _next(self):
-    t = self.next
+    t = self.current
     self._future()
     return t
