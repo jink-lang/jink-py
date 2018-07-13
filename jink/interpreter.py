@@ -14,7 +14,22 @@ class Interpreter:
 
   def evaluate_top(self, expr):
     if isinstance(expr, IdentLiteral):
-      return self.env.get_var(expr.name)
+      if None in (expr.index['type'], expr.index['index']):
+        return self.env.get_var(expr.name)
+      elif expr.index['type'] == 'prop':
+        var = self.env.get_var(expr.name)
+
+        if var['type'] != 'obj':
+          raise Exception(f"Variable '{expr.name}' of type {var['type']} does not support indexing")
+
+        obj = var['value']
+        if isinstance(expr.index['index'], IdentLiteral):
+          if expr.index['index'].name not in obj:
+            raise Exception(f"Object '{expr.name}' does not contain the property '{expr.index['index'].name}'")
+          else:
+            return obj[expr.index['index'].name]
+        elif isinstance(expr.index['index'], CallExpression):
+          pass
 
     elif isinstance(expr, (StringLiteral, IntegerLiteral, FloatingPointLiteral)):
       return self.unwrap_value(expr)
@@ -34,8 +49,12 @@ class Interpreter:
       return BINOP_EVALS[expr.operator](self.unwrap_value(left), self.unwrap_value(right)) or 0
 
     elif isinstance(expr, Assignment):
-      value = self.unwrap_value(self.evaluate_top(expr.value))
-      return self.env.set_var(expr.ident.name, expr.type, value if value != None else 'null')
+      value = self.evaluate_top(expr.value)
+      try:
+        value = self.unwrap_value(value)
+      except KeyError:
+        pass
+      return self.env.set_var(expr.ident.name, value if value != None else 'null', expr.type)
 
     elif isinstance(expr, Conditional):
       if hasattr(expr, 'expression') and expr.expression != None:
@@ -61,6 +80,9 @@ class Interpreter:
     elif isinstance(expr, Return):
       result = self.evaluate_top(expr.expression)
       return { 'type': 'return', 'value': self.unwrap_value(result) }
+    
+    elif isinstance(expr, dict):
+      return expr
 
   def evaluate_condition(self, cond):
     if cond in ('true', 'false'):
@@ -96,7 +118,7 @@ class Interpreter:
 
         if value != None:
           try:
-            scope.set_var(p.name, p.type, value)
+            scope.set_var(p.name, value, p.type)
           except:
             raise Exception(f"Improper function parameter or call argument at function '{func.name}'.")
         i += 1
@@ -107,19 +129,12 @@ class Interpreter:
         if isinstance(result, list):
           result = result[0] if len(result) > 0 else []
         if result and isinstance(result, dict) and result['type'] == 'return':
-          if func.return_type == 'void':
-            if not result['value']:
-              break
-            else:
-              raise Exception(f"Void function '{func.name}' returned item.")
-          elif isinstance(result['value'], bool):
+          if isinstance(result['value'], bool):
             _return = 'true' if result['value'] == True else 'false'
           elif isinstance(result['value'], (int, float)):
             _return = result['value'] if result['value'] != None else 0
-          elif isinstance(result['value'], TYPES[func.return_type]):
-            _return = result['value']
           else:
-            raise Exception(f"Function '{func.name}' of return type {func.return_type} returned item of incorrect type: '{result['value'] or 'null'}'.")
+            _return = result['value']
           break
 
       # Step back out of this scope
@@ -130,7 +145,7 @@ class Interpreter:
       else:
         return _return
 
-    self.env.def_func(func.name, function)
+    self.env.def_func(func.name.value, function)
     return function
 
   # Obtain literal values

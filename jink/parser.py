@@ -1,30 +1,46 @@
+from .utils.names import *
 from .utils.classes import *
 from .utils.future_iter import FutureIter
-
-TYPES = (
-  'int',
-  'float',
-  'string',
-  'bool',
-  'void'
-)
-
-KEYWORDS = (
-  'if', 'else', 'elseif',
-  'import', 'export',
-  'return', 'delete',
-  'true', 'false', 'null'
-)
 
 class Parser:
   def __init__(self):
     self.tokens = None
 
+  def consume(self, item, soft=False):
+    """Removes expected token, given a type or a tuple of types."""
+    current = self.tokens.current
+
+    if not item:
+      return self.tokens._next()
+
+    # Doesn't error out if the token isn't found
+    # But removes it if found
+    if soft:
+      if isinstance(item, tuple):
+        if current.type in item:
+          return self.tokens._next()
+      elif current.type == item:
+        return self.tokens._next()
+    else:
+      self.tokens._next()
+      if isinstance(item, tuple):
+        if current.type not in item:
+          raise Exception(f"Expected {' or '.join(item)}, got {current.type} on line {current.line}.")
+        else:
+          return current
+      else:
+        # Strings have text that could be used to spoof this check so I account for them here
+        if current.value == item and current.type != 'string':
+          return current
+        elif current.type == item:
+          return current
+        raise Exception(f"Expected '{item}', got '{current.type}' on line {current.line}.")
+
   def parse(self, tokens):
     self.tokens = FutureIter(tokens)
     program = []
-    while self.tokens.next is not None:
-      if self.tokens.next.type != 'newline':
+    while self.tokens.current is not None:
+      if self.tokens.current.type != 'newline':
         program.append(self.parse_top())
       else:
         self.tokens._next()
@@ -39,206 +55,211 @@ class Parser:
       print(expr)
 
   def skip_newlines(self, count=-1):
-    while self.tokens.next != None and self.tokens.next.type == 'newline' and count != 0:
+    while self.tokens.current != None and self.tokens.current.type == 'newline' and count != 0:
       count -= 1
       self.tokens._next()
-    return self.tokens.next
+    return self.tokens.current
 
   def parse_top(self):
-    init = self.tokens.next
+    init = self.tokens.current
 
     if init == None:
       return
     elif init.type != 'keyword':
       return self.parse_expr()
-    elif init.text in TYPES:
+
+    elif init.value in ('let', 'const'):
       self.tokens._next()
-      cur = self.tokens.next
+      ident = self.consume('identifier')
+      cur = self.tokens.current
 
-      # We got an identifier?
-      if cur.type == 'ident':
-        self.tokens._next()
-        nxt = self.tokens.next
+      # Assignments
+      if cur.value == '=':
+        return self.parse_assignment(init.value, ident.value, cur)
+      elif cur.type in ('newline', 'semicolon'):
+        return self.parse_assignment(init.value, ident.value, cur)
 
-        # Assignments
-        if nxt.text == '=' and init.text != 'void':
-          return self.parse_assignment(init.text, cur.text, nxt)
-        elif nxt.type in ('newline', 'semicolon'):
-          return self.parse_assignment(init.text, cur.text, nxt)
+    elif init.value == 'fun':
+      self.tokens._next()
+      return self.parse_function()
 
-        # Function declarations
-        elif nxt.text == '(':
-          return self.parse_function(init.text, cur.text)
-
-        # Function parameters
-        elif nxt.text in (',', ')', ':'):
-          if nxt.text == ':':
-            self.tokens._next()
-            default = self.parse_expr()
-            return FunctionParameter(cur.text, init.text, default)
-          return FunctionParameter(cur.text, init.text, None)
+      # Function parameters
+      if _next.value in (',', ')', ':'):
+        if _next.value == ':':
+          self.tokens._next()
+          default = self.parse_expr()
+          return FunctionParameter(cur.value, init.value, default)
+        return FunctionParameter(cur.value, init.value, None)
 
       # Keyword functions
-      elif cur.text == '(' and init.text != 'void':
-        return self.parse_call(init.text)
+      elif cur.value == '(':
+        return self.parse_call(init.value)
 
     # Return statements
-    elif init.text == 'return':
+    elif init.value == 'return':
       return self.parse_return()
 
     # Conditionals
-    elif init.text == 'if':
+    elif init.value == 'if':
       return self.parse_conditional()
 
     # Null
-    elif init.text == 'null':
+    elif init.value == 'null':
       self.tokens._next()
       return Null()
-    
+
     else:
-      raise Exception(f"Expected keyword, got '{init.text}' on line {init.line}")
+      raise Exception(f"Expected keyword, got '{init.value}' on line {init.line}.")
 
   def parse_expr(self, precedence=0):
     left = self.parse_primary()
-    current = self.tokens.next
+    current = self.tokens.current
 
     while current and current.type == 'operator' and self.get_precedence(current) >= precedence:
       operator = self.tokens._next()
-      if operator.text in ('++', '--'):
-        return UnaryOperator(operator.text + ':post', left)
+      if operator.value in ('++', '--'):
+        return UnaryOperator(operator.value + ':post', left)
 
       next_precedence = self.get_precedence(operator)
       if self.is_left_associative(operator):
         next_precedence += 1
 
       right = self.parse_expr(next_precedence)
-      left = BinaryOperator(operator.text, left, right)
+      left = BinaryOperator(operator.value, left, right)
 
-      current = self.tokens.next
+      current = self.tokens.current
 
     if current and current.type == 'semicolon':
-      self.tokens._next()
+      self.consume('semicolon')
 
     return left
 
   def parse_primary(self):
     self.skip_newlines()
-    current = self.tokens.next
-    if current == None:
-      raise Exception("Expected primary expression")
+    current = self.tokens.current
+    if current == None: return
 
-    elif self.is_unary_operator(current):
+    if self.is_unary_operator(current):
       operator = self.tokens._next()
-      if operator.text in ('-', '+', '!'):
+      if operator.value in ('-', '+', '!'):
         value = self.parse_primary()
-        return UnaryOperator(operator.text, value)
+        return UnaryOperator(operator.value, value)
       value = self.parse_expr(self.get_precedence(operator))
-      return UnaryOperator(operator.text, value)
+      return UnaryOperator(operator.value, value)
 
-    elif current.text == '(':
-      self.tokens._next()
+    elif current.value == '(':
+      self.consume('lparen')
       value = self.parse_expr(0)
-      if self.tokens._next().text is not ')':
-        tk = self.tokens.next
-        raise Exception(f"Expected ')', got '{tk.text}' on line {tk.line}")
+      self.consume('rparen')
       return value
+
+    elif current.value == '{':
+      self.consume('lbrace')
+      obj = self.parse_object()
+      self.consume('rbrace')
+      return obj
 
     elif current.type == 'number':
       current = self.tokens._next()
-      if current.text.count('.') > 0:
-        return FloatingPointLiteral(float(current.text))
-      return IntegerLiteral(int(current.text))
+      if current.value.count('.') > 0:
+        return FloatingPointLiteral(float(current.value))
+      return IntegerLiteral(int(current.value))
 
     elif current.type == 'string':
-      return StringLiteral(self.tokens._next().text)
+      return StringLiteral(self.tokens._next().value)
 
-    elif current.type == 'ident':
-      ident = self.tokens._next().text
-      if self.tokens.next.text == '(':
+    elif current.type == 'identifier':
+      ident = self.tokens._next().value
+      if self.tokens.current.value == '.':
+        self.tokens._next()
+        index = { 'type': 'prop', 'index': self.parse_top() }
+        return IdentLiteral(ident, index)
+      elif self.tokens.current.value == '(':
         return self.parse_call(ident)
-      elif self.tokens.next.text == '=':
-        return self.parse_assignment(None, ident, self.tokens.next)
+      elif self.tokens.current.value == '=':
+        return self.parse_assignment(None, ident, self.tokens.current)
       else:
         return IdentLiteral(ident)
 
     elif current.type == 'keyword':
-      keyword = self.tokens._next().text
+      keyword = self.tokens._next().value
       if keyword in ('true', 'false'):
         return BooleanLiteral(keyword)
-      elif self.tokens.next.text == '(':
+      elif self.tokens.current.value == '(':
         return self.parse_call(keyword)
       elif keyword == 'null':
         return Null()
 
-    raise Exception(f"Expected primary expression, got '{current.text}' on line {current.line}")
+    raise Exception(f"Expected primary expression, got '{current.value}' on line {current.line}.")
 
   def is_unary_operator(self, token):
     if hasattr(token, 'type'):
       if token.type == 'string':
         return False
-    return token.text in ('-', '+', '++', '--', '!')
+    return token.value in ('-', '+', '++', '--', '!')
 
   def is_left_associative(self, token):
     if hasattr(token, 'type'):
       if token.type == 'string':
         return False
-    return token.text not in ('++', '--', '+=', '-=', '=')
+    return token.value not in ('++', '--', '+=', '-=', '=')
 
   def get_precedence(self, token):
-    if token.text in ('+', '-'):
+    if token.value in ('+', '-'):
       return 1
-    elif token.text in ('*', '/', '%'):
+    elif token.value in ('*', '/', '%'):
       return 2
-    elif token.text in ('^'):
+    elif token.value in ('^'):
       return 3
     else:
       return 0
 
-  def parse_assignment(self, type, name, nxt):
+  def parse_assignment(self, var_type, name, _next):
     self.tokens._next()
-    if nxt.type in ('newline', 'semicolon'):
-      return Assignment(type, IdentLiteral(name), None)
-    expr = self.parse_expr()
-    return Assignment(type, IdentLiteral(name), expr)
+    if _next.type in ('newline', 'semicolon'):
+      assignment = Assignment(var_type, IdentLiteral(name), None)
+    else:
+      assignment = Assignment(var_type, IdentLiteral(name), self.parse_expr())
+
+    if self.tokens.current != None:
+      self.consume(('newline', 'semicolon'))
+
+    return assignment
 
   def parse_call(self, func_name):
-    self.tokens._next()
     args = self.parse_args_params()
     return CallExpression(IdentLiteral(func_name), args)
 
-  def parse_function(self, return_type, name):
-    init = self.tokens._next()
+  def parse_function(self):
+    name = self.consume('identifier')
     params = self.parse_args_params()
     body = self.parse_block()
-    return Function(return_type, name, params, body)
-  
+    return Function(name, params, body)
+
   # Parse arguments and parameters
   # For both function calls and function definitions, respectively
   def parse_args_params(self):
+    self.consume('lparen')
     l = []
-    while True:
-      if self.tokens.next.text == ')':
-        self.tokens._next()
+    while True and self.tokens.current != None:
+      if self.tokens.current.value == ')':
+        self.consume('rparen')
         break
       l.append(self.parse_top())
-      if self.tokens.next.text == ',':
-        self.tokens._next()
-      elif self.tokens.next.type == 'newline':
-        self.tokens._next()
-      elif self.tokens._next().text == ')':
-        break
+      if self.tokens.current.value in (',', 'newline'):
+        self.consume(('comma', 'newline'), soft=True)
       else:
-        raise Exception(f"Expected ), got {self.tokens.next.text} on line {self.tokens.next.line}")
-
+        self.consume('rparen')
+        break
     return l
 
   # Return parsing
   def parse_return(self):
     self.tokens._next()
-    if self.tokens.next.type == 'semicolon':
+    if self.tokens.current.type == 'semicolon':
       self.tokens._next()
       return Return(None)
-    if self.tokens.next.type == 'newline':
+    if self.tokens.current.type == 'newline':
       return Return(None)
     expr = self.parse_expr()
     return Return(expr)
@@ -248,47 +269,71 @@ class Parser:
     init = self.tokens._next()
 
     # Parse else first because it is unlike if/elseif
-    if init.text == 'else':
-      return Conditional(init.text, None, self.parse_block(), None)
+    if init.value == 'else':
+      return Conditional(init.value, None, self.parse_block(), None)
 
     body = []
     else_body = []
-    cur = self.tokens.next
-    if cur.text != '(':
-      raise Exception(f"Expected '(', got '{cur.text}' on line {cur.line}")
+    self.consume('lparen')
     expr = self.parse_expr()
+    self.consume('rparen')
     body = self.parse_block()
 
     # If an else case is next
     self.skip_newlines()
-    nxt = self.tokens.next
-    if nxt and nxt.type == 'keyword' and nxt.text in ('elseif', 'else'):
+    _next = self.tokens.current
+    if _next and _next.type == 'keyword' and _next.value in ('elseif', 'else'):
       else_body.append(self.parse_conditional())
 
-    return Conditional(init.text, expr, body, else_body)
+    return Conditional(init.value, expr, body, else_body)
 
   # Parse blocks for functions and conditionals
   def parse_block(self):
     body = []
-    if self.tokens.next.text == '{':
-      self.tokens._next()
+    if self.tokens.current.value == '{':
+      self.consume('lbrace')
       self.skip_newlines()
-      while self.tokens.next is not None and self.tokens.next.text is not '}':
+      while self.tokens.current is not None and self.tokens.current.value is not '}':
         body.append(self.parse_top())
-        if self.tokens.next.type == 'newline':
-          self.skip_newlines()
+        self.skip_newlines()
       if self.tokens._next() == None:
-        raise Exception(f"Expected '}}', got {self.tokens.next.text} on line {self.tokens.next.line}")
+        raise Exception(f"Expected '}}', got {self.tokens.current.value} on line {self.tokens.current.line}.")
 
     # One or two lined
     # ex: string say_hi() return print("Hi")
     else:
-      init = self.tokens.next
+      init = self.tokens.current
       # Skip only one line
       # If there is more space before an expression, you're doing it wrong kiddo
       self.skip_newlines(1)
-      if self.tokens.next.type == 'newline':
-        raise Exception(f"Empty function body on line {init.line}")
+      if self.tokens.current.type == 'newline':
+        raise Exception(f"Empty function body on line {init.line}.")
       body.append(self.parse_top())
 
     return body
+
+  def parse_kv_pair(self):
+    self.skip_newlines()
+    k = self.consume(('identifier', 'string')).value
+    self.consume(':')
+    if self.tokens.current.type == 'lbrace':
+      self.consume('lbrace')
+      v = self.parse_object()
+      self.consume('rbrace')
+    else:
+      v = self.consume(('identifier', 'string')).value
+    return k, v
+
+  def parse_object(self):
+    obj = {}
+    while self.tokens.current is not None and self.tokens.current.type is not 'rbrace':
+      k, v = self.parse_kv_pair()
+      obj[k] = v
+      self.skip_newlines()
+      if self.tokens.current.type == 'rbrace':
+        break
+      self.consume('comma')
+
+    if self.tokens.current.value != '}':
+      raise Exception(f"Expected '}}', got {self.tokens.current.value} on line {self.tokens.current.line}.")
+    return obj
