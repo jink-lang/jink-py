@@ -1,9 +1,10 @@
 from .evals import *
 
 TYPES = {
-  'int': int,
-  'float': float,
-  'string': str
+  int: 'int',
+  float: 'float',
+  str: 'string',
+  dict: 'obj'
 }
 
 class Environment:
@@ -23,22 +24,6 @@ class Environment:
         return scope
       scope = scope.parent
 
-  def validate_type(self, name, _type, value):
-    if value == 'null':
-      return value
-    elif _type == 'int' and isinstance(value, float):
-      raise Exception(f"Tried to assign value '{value}' to variable '{name}' of type {_type}.")
-    elif _type == 'string' and (isinstance(value, (float, int, bool))):
-      if isinstance(value, bool):
-        value = str(value).lower()
-      raise Exception(f"Tried to assign value '{value}' to variable '{name}' of type {_type}.")
-    elif _type in TYPES:
-      try:
-        value = TYPES[_type](value)
-      except:
-        raise Exception(f"Tried to assign value '{value or 'null'}' to variable '{name}' of type {_type}.")
-    return value
-
   def get_var(self, name):
     scope = self.find_scope(name)
     if not scope:
@@ -49,25 +34,28 @@ class Environment:
 
     raise Exception(f"{name} is not defined.")
 
-  # Can be either definition or reassignment
-  def set_var(self, name, _type, value):
+  def set_var(self, name, value, var_type=None):
     scope = self.find_scope(name)
+
+    for py_type, _type in TYPES.items():
+      if isinstance(value, py_type):
+        val_type = _type
 
     # Assignments
     if scope:
       v = scope.get_var(name)
-      if _type and _type != v['type']:
-        raise Exception(f"Variable {name} already exists.")
-      _type = v['type']
-      value = self.validate_type(name, _type, value)
+
+      if var_type != None:
+        raise Exception(f"{name} is already defined.")
+      elif v['var_type'] == 'const':
+        raise Exception(f"Constant {name} is not reassignable.")
       scope.index[name]['value'] = value
+      scope.index[name]['type'] = val_type
 
     # Definitions
     else:
-      if not _type:
-        raise Exception(f"{name} is not defined.")
-      value = self.validate_type(name, _type, value)
-      self.index[name] = { 'type': _type, 'value': value }
+      self.index[name] = { 'value': value, 'type': val_type, 'var_type': var_type }
+
     return value
 
   def def_func(self, name, func):
@@ -78,23 +66,20 @@ class Environment:
     return f"{self.parent or 'null'}->{self._id}:{self.index}"
 
 
-class LexerToken:
-  __slots__ = ('type', 'text', 'line', 'pos')
-  def __init__(self, type, text, line, pos):
-    self.type, self.text, self.line, self.pos = \
-      type, text, line, pos
+class Token:
+  def __init__(self, _type, value, line, pos):
+    self.type, self.value, self.line, self.pos = _type, value, line, pos
   def __str__(self):
-    return f'{{{self.type} {self.text}}}'
+    return f"{{{self.type} {self.value}}}"
   __repr__ = __str__
 
 
 class BinaryOperator:
   __slots__ = ('operator', 'left', 'right')
   def __init__(self, operator, left, right):
-    self.operator, self.left, self.right = \
-      operator, left, right
+    self.operator, self.left, self.right = operator, left, right
   def __str__(self):
-    return f'{{BinaryOperator {self.operator} {{left: {self.left}, right: {self.right}}}}}'
+    return f"{{BinaryOperator {self.operator} {{left: {self.left}, right: {self.right}}}}}"
   __repr__ = __str__
 
 class UnaryOperator:
@@ -102,7 +87,7 @@ class UnaryOperator:
   def __init__(self, operator, value):
     self.operator, self.value = operator, value
   def __str__(self):
-    return f'{{UnaryOperator {self.operator} {self.value}}}'
+    return f"{{UnaryOperator {self.operator} {self.value}}}"
   __repr__ = __str__
 
 class IntegerLiteral:
@@ -110,7 +95,7 @@ class IntegerLiteral:
   def __init__(self, value):
     self.value = value
   def __str__(self):
-    return f'{{IntegerLiteral {self.value}}}'
+    return f"{{IntegerLiteral {self.value}}}"
   __repr__ = __str__
 
 class FloatingPointLiteral:
@@ -118,7 +103,7 @@ class FloatingPointLiteral:
   def __init__(self, value):
     self.value = value
   def __str__(self):
-    return f'{{FloatingPointLiteral {self.value}}}'
+    return f"{{FloatingPointLiteral {self.value}}}"
   __repr__ = __str__
 
 class StringLiteral:
@@ -126,7 +111,7 @@ class StringLiteral:
   def __init__(self, value):
     self.value = value
   def __str__(self):
-    return f'{{StringLiteral {self.value}}}'
+    return f"{{StringLiteral {self.value}}}"
   __repr__ = __str__
 
 class BooleanLiteral:
@@ -134,15 +119,14 @@ class BooleanLiteral:
   def __init__(self, value):
     self.value = value
   def __str__(self):
-    return f'{{BooleanLiteral {self.value}}}'
+    return f"{{BooleanLiteral {self.value}}}"
   __repr__ = __str__
 
 class IdentLiteral:
-  __slots__ = ('name')
-  def __init__(self, name):
-    self.name = name
+  def __init__(self, name, index={ 'type': None, 'index': None }):
+    self.name, self.index = name, index
   def __str__(self):
-    return f'{{IdentLiteral {self.name}}}'
+    return f"{{IdentLiteral {self.name} ({self.index['index'] or ''})}}"
   __repr__ = __str__
 
 class Null:
@@ -150,13 +134,13 @@ class Null:
     return '{{Null}}'
   __repr__ = __str__
 
+
 class Assignment:
   __slots__ = ('type', 'ident', 'value')
-  def __init__(self, type, ident, value):
-    self.type, self.ident, self.value = \
-      type, ident, value
+  def __init__(self, _type, ident, value):
+    self.type, self.ident, self.value = _type, ident, value
   def __str__(self):
-    return f'{{Assignment {self.ident} {self.value}}}'
+    return f"{{Assignment {self.ident} {self.value}}}"
   __repr__ = __str__
 
 class CallExpression:
@@ -164,24 +148,23 @@ class CallExpression:
   def __init__(self, name, args):
     self.name, self.args = name, args
   def __str__(self):
-    return f'{{CallExpression {self.name} {self.args}}}'
+    return f"{{CallExpression {self.name} {self.args}}}"
   __repr__ = __str__
 
 class Function:
-  __slots__ = ('return_type', 'name', 'params', 'body')
-  def __init__(self, return_type, name, params, body):
-    self.return_type, self.name, self.params, self.body = \
-      return_type, name, params, body
+  __slots__ = ('name', 'params', 'body')
+  def __init__(self, name, params, body):
+    self.name, self.params, self.body = name, params, body
   def __str__(self):
-    return f'{{Function {self.name} {self.params} {self.body}}}'
+    return f"{{Function {self.name} {self.params} {self.body}}}"
   __repr__ = __str__
 
 class FunctionParameter:
   __slots__ = ('name', 'type', 'default')
-  def __init__(self, name, type, default=None):
-    self.name, self.type, self.default = name, type, default
+  def __init__(self, name, _type, default=None):
+    self.name, self.type, self.default = name, _type, default
   def __str__(self):
-    return f'{{FunctionParameter {self.name} {self.type}}}'
+    return f"{{FunctionParameter {self.name} {self.type}}}"
   __repr__ = __str__
 
 class Return:
@@ -189,14 +172,14 @@ class Return:
   def __init__(self, expression):
     self.expression = expression
   def __str__(self):
-    return f'{{Return {self.expression}}}'
+    return f"{{Return {self.expression}}}"
   __repr__ = __str__
 
 class Conditional:
   __slots__ = ('type', 'expression', 'body', 'else_body')
-  def __init__(self, type, expression, body, else_body):
+  def __init__(self, _type, expression, body, else_body):
     self.type, self.expression, self.body, self.else_body = \
-      type, expression, body, else_body
+      _type, expression, body, else_body
   def __str__(self):
-    return f'{{Conditional {self.type} {self.expression} {self.body} {self.else_body}}}'
+    return f"{{Conditional {self.type} {self.expression} {self.body} {self.else_body}}}"
   __repr__ = __str__

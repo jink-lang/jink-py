@@ -15,27 +15,27 @@ class LexerTest(unittest.TestCase):
 
   def test_string_escape(self):
     """Ensures the escape character lexes properly."""
-    code = "string hey_there = '\\'Hello world\\''"
+    code = "let hey_there = '\\'Hello world\\''"
     lexed = self.lexer.parse_literal(code)
-    assert lexed == "[{keyword string}, {ident hey_there}, {operator =}, {string 'Hello world'}]", "Issue in escape character lexical analysis."
+    assert lexed == "[{keyword let}, {identifier hey_there}, {operator =}, {string 'Hello world'}]", "Issue in escape character lexical analysis."
 
   def test_assignment_1(self):
     """Ensures variable declaration and assignment are lexed properly."""
-    code = "string hello = 'world'"
+    code = "let hello = 'world'"
     lexed = self.lexer.parse_literal(code)
-    assert lexed == "[{keyword string}, {ident hello}, {operator =}, {string world}]", "Issue in variable declaration tokenization."
+    assert lexed == "[{keyword let}, {identifier hello}, {operator =}, {string world}]", "Issue in variable declaration tokenization."
 
   def test_assignment_2(self):
     """Ensures variable declaration and assignment are lexed properly."""
-    code = "float pi = 3.14"
+    code = "let pi = 3.14"
     lexed = self.lexer.parse_literal(code)
-    assert lexed == "[{keyword float}, {ident pi}, {operator =}, {number 3.14}]", "Issue in variable declaration tokenization."
+    assert lexed == "[{keyword let}, {identifier pi}, {operator =}, {number 3.14}]", "Issue in variable declaration tokenization."
   
   def test_call_1(self):
     """Ensures function calls are lexed properly."""
     code = "print('Hello world!')"
     lexed = self.lexer.parse_literal(code)
-    assert lexed == "[{ident print}, {lparen (}, {string Hello world!}, {rparen )}]", "Issue in function call tokenization."
+    assert lexed == "[{identifier print}, {lparen (}, {string Hello world!}, {rparen )}]", "Issue in function call tokenization."
 
 
 class ParserTest(unittest.TestCase):
@@ -48,7 +48,7 @@ class ParserTest(unittest.TestCase):
     code = "print('hello')"
     tokens = self.lexer.parse(code)
     parsed = self.parser.parse_literal(tokens)
-    assert parsed == "[{CallExpression {IdentLiteral print} [{StringLiteral hello}]}]", "Issue in function call parsing."
+    assert parsed == "[{CallExpression {IdentLiteral print ()} [{StringLiteral hello}]}]", "Issue in function call parsing."
 
   def test_math(self):
     """Ensures arithmetic is parsed properly."""
@@ -59,10 +59,10 @@ class ParserTest(unittest.TestCase):
   
   def test_assignment_1(self):
     """Ensures variable declaration and assignment are parsed properly."""
-    code = "int test = 5 * 5 / 5"
+    code = "let test = 5 * 5 / 5"
     tokens = self.lexer.parse(code)
     parsed = self.parser.parse_literal(tokens)
-    assert parsed == "[{Assignment {IdentLiteral test} {BinaryOperator / {left: {BinaryOperator * {left: {IntegerLiteral 5}, right: {IntegerLiteral 5}}}, right: {IntegerLiteral 5}}}}]", "Issue in assignment parsing."
+    assert parsed == "[{Assignment {IdentLiteral test ()} {BinaryOperator / {left: {BinaryOperator * {left: {IntegerLiteral 5}, right: {IntegerLiteral 5}}}, right: {IntegerLiteral 5}}}}]", "Issue in assignment parsing."
   
   def test_conditional_1(self):
     """Ensures conditionals are parsed properly."""
