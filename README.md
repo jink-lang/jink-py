@@ -1,30 +1,36 @@
 # jink
 
-> Jink is a strongly-typed, JavaScript-like programming language.
+[![Build Status](https://travis-ci.org/jink-lang/jink.svg?branch=master)](https://travis-ci.org/jink-lang/jink)
+[![Discord](https://img.shields.io/discord/365599795886161941.svg)](https://discord.gg/cWzcQz2)
 
-[![Build Status](https://travis-ci.org/jink-lang/jink.svg?branch=master)](https://travis-ci.org/jink-lang/jink) [![Discord](https://img.shields.io/discord/365599795886161941.svg)](https://discord.gg/cWzcQz2)
+---
 
-I made Jink to prove to myself that I could, and I plan to support it as long as I see fit. It has been my most difficult project, which makes it the most fun!
+> Jink is a simplistic, JavaScript-like programming language built using Python.
+
+I've built Jink to prove to myself that I can, not to make the most efficient, useful or mind-bending new language. I plan to support it for as long as I see fit, and contribution is very welcome. Thanks for checking it out!
+
+## Progress Checklist
+
+- [ ] Convert to compiler
+- [ ] Module support
+- [ ] File support
+- [ ] I/O support
+- [ ] Networking support
 
 ## Example
 
 ```jink
-int example_func(int in) {
-    return ++in
+fun example_function(input) {
+    return ++input
 }
 
-int out = example_func(1336)
-print(out) // Prints 1337 to the console
+let output = example_func(1336)
+print(output) // Prints 1337 to the console!
 ```
 
-## Prerequisites
+## Installation
 
-* Python 3.6+
-* cx_Freeze (Only if you want to build an executable. Will be installed through `build-executable.bat`)
-
-## Getting Started
-
-Assuming you have Python 3.6 or newer, you can get started right away!
+Assuming you have Python 3.6 or newer, you can get started right away after cloning the project!
 
 To launch the REPL:
 
@@ -46,29 +52,34 @@ python jink.py ./examples/01-hello_world.jk
 
 ### Building
 
-For Windows users, run `build-executable.bat`. Linux support has not been added yet, and Mac OS X has not been tested.
+#### Prerequisites
+
+* Python 3.6+
+
+#### Windows
+
+1. Clone the project.
+2. Run the included `build-executable.bat` file; this will install cx_Freeze and build the executable.
 
 ```cmd
-cd build/exe.win32-3.6
-jink.exe main.jk
+cd build/exe.win32-3.x
+jink.exe C:/path/to/your_file.jk
 ```
+
+Optionally, you can move the contents of the /build/exe.win32-3.x folder to a folder you've added to your PATH. This will allow you to run Jink via your command line.
 
 ## Contributing
 
-I will set up a contribution guide when I can. In the meantime, feel free to provide feedback any way you see fit. This project is still fairly new, after all.
+I will set up a contribution guide when I can. In the meantime, feel free to provide feedback in any way you see fit. This project is still fairly new, after all.
 
 ## Acknowledgements
 
-* Enormous thanks to [king1600](https://github.com/king1600) for helping me to better understand interpreter design and providing me the resources and support I needed to carry out this project.
+* Enormous thanks to [king1600](https://github.com/king1600) for helping me to better understand interpreter and compiler design and providing me the resources and support I needed to carry out this project.
 
-* This project also would not have been possible without the incredible resources on implementing a programming language at [Mihai Bazon's blog](http://lisperator.net).
+* This project also would not have been possible without the incredible resources on PL implementation at [Mihai Bazon's blog](http://lisperator.net).
 
 ## License
 
 This project is distributed under the MIT License - see the [license file](LICENSE) for details.
 
 Copyright © 2018 Jacob
-
-## P.S.
-
-Don't call me silly for making an interpreted language strongly-typed, call me silly for making it with a loosely-typed language. Haha! xoxo
