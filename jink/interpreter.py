@@ -106,9 +106,19 @@ class Interpreter:
 
       # Apply arguments to this call's scope, otherwise use function defaults if any
       i = 0
+
       for p in params:
         default = None
-        if p.default:
+
+        if isinstance(p, Assignment):
+          default = p.value or 'null'
+          name = p.ident.name
+          _type = p.type
+          class Object(): pass
+          p = Object()
+          setattr(p, 'name', name)
+          setattr(p, 'type', _type)
+        elif p.default:
           default = self.unwrap_value(p.default)
 
         if len(args) > i:
@@ -123,6 +133,7 @@ class Interpreter:
             raise Exception(f"Improper function parameter or call argument at function '{func.name}'.")
         i += 1
 
+      # Ensure returning of the correct value
       _return = None
       for e in func.body:
         result = self.evaluate([e], scope)[0]
@@ -145,7 +156,7 @@ class Interpreter:
       else:
         return _return
 
-    self.env.def_func(func.name.value, function)
+    self.env.def_func(func.name, function)
     return function
 
   # Obtain literal values

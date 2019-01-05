@@ -28,12 +28,9 @@ def const_fold(expr):
     elif isinstance(left, (FloatingPointLiteral, IntegerLiteral)) and isinstance(right, (FloatingPointLiteral, IntegerLiteral)):
       return FloatingPointLiteral(BINOP_EVALS[expr.operator](left.value, right.value))
 
-    elif isinstance(left, StringLiteral) or isinstance(right, StringLiteral):
+    elif isinstance(left, StringLiteral) and isinstance(right, StringLiteral):
       if expr.operator != '+':
         raise Exception(f"Only '+' operator can be used with strings.")
-
-      if not hasattr(left, 'value') or not hasattr(right, 'value'):
-        raise Exception("Tried to concatenate string with non-string value.")
       return StringLiteral(str(left.value) + str(right.value))
 
   elif isinstance(expr, Assignment):

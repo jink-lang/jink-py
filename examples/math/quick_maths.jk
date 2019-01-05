@@ -1,7 +1,7 @@
-int add(int a, int b) return a + b
-int subtract(int a, int b) return a - b
-int multiply(int a, int b) return a * b
-float divide(int a, int b) return a / b
+fun add(let a, let b) return a + b
+fun subtract(let a, let b) return a - b
+fun multiply(let a, let b) return a * b
+fun divide(let a, let b) return a / b
 
 print(
   add(5, 5),
