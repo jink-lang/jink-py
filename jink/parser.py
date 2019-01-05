@@ -60,11 +60,20 @@ class Parser:
       self.tokens._next()
     return self.tokens.current
 
-  def parse_top(self):
+  def parse_top(self, parse_type=None):
     init = self.tokens.current
 
     if init == None:
       return
+
+    # For parsing function parameters
+    elif parse_type == 'params':
+      self.tokens._next()
+
+      if init.value in ('let', 'const'):
+        ident = self.consume('identifier')
+        return self.parse_assignment(init.value, ident.value)
+
     elif init.type != 'keyword':
       return self.parse_expr()
 
@@ -74,26 +83,13 @@ class Parser:
       cur = self.tokens.current
 
       # Assignments
-      if cur.value == '=':
-        return self.parse_assignment(init.value, ident.value, cur)
-      elif cur.type in ('newline', 'semicolon'):
-        return self.parse_assignment(init.value, ident.value, cur)
+      if (cur.type == 'operator' and cur.value == '=') or cur.type in ('newline', 'semicolon'):
+        self.tokens._next()
+        return self.parse_assignment(init.value, ident.value)
 
     elif init.value == 'fun':
       self.tokens._next()
       return self.parse_function()
-
-      # Function parameters
-      if _next.value in (',', ')', ':'):
-        if _next.value == ':':
-          self.tokens._next()
-          default = self.parse_expr()
-          return FunctionParameter(cur.value, init.value, default)
-        return FunctionParameter(cur.value, init.value, None)
-
-      # Keyword functions
-      elif cur.value == '(':
-        return self.parse_call(init.value)
 
     # Return statements
     elif init.value == 'return':
@@ -214,38 +210,51 @@ class Parser:
     else:
       return 0
 
-  def parse_assignment(self, var_type, name, _next):
-    self.tokens._next()
-    if _next.type in ('newline', 'semicolon'):
+  def parse_assignment(self, var_type, name):
+    if self.tokens.current.type in ('newline', 'semicolon', 'comma'):
       assignment = Assignment(var_type, IdentLiteral(name), None)
+    elif self.tokens.current.type == 'rparen':
+      assignment = Assignment(var_type, IdentLiteral(name), None)
+      return assignment
     else:
       assignment = Assignment(var_type, IdentLiteral(name), self.parse_expr())
 
-    if self.tokens.current != None:
+    if self.tokens.current != None and self.tokens.current.type != 'comma':
       self.consume(('newline', 'semicolon'))
 
     return assignment
 
   def parse_call(self, func_name):
-    args = self.parse_args_params()
+    args = self.parse_args_params('args')
     return CallExpression(IdentLiteral(func_name), args)
 
   def parse_function(self):
-    name = self.consume('identifier')
-    params = self.parse_args_params()
+    ident = self.consume('identifier')
+    params = self.parse_args_params('params')
     body = self.parse_block()
-    return Function(name, params, body)
+    return Function(ident.value, params, body)
 
   # Parse arguments and parameters
   # For both function calls and function definitions, respectively
-  def parse_args_params(self):
+  def parse_args_params(self, location):
     self.consume('lparen')
     l = []
+
+    # TODO Fix
+    # if location = 'params':
+    #   # Function parameters
+    #   if _next.value in (',', ')', ':'):
+    #     if _next.value == ':':
+    #       self.tokens._next()
+    #       default = self.parse_expr()
+    #       return FunctionParameter(cur.value, init.value, default)
+    #     return FunctionParameter(cur.value, init.value, None)
+
     while True and self.tokens.current != None:
       if self.tokens.current.value == ')':
         self.consume('rparen')
         break
-      l.append(self.parse_top())
+      l.append(self.parse_top(location))
       if self.tokens.current.value in (',', 'newline'):
         self.consume(('comma', 'newline'), soft=True)
       else:
@@ -300,7 +309,7 @@ class Parser:
         raise Exception(f"Expected '}}', got {self.tokens.current.value} on line {self.tokens.current.line}.")
 
     # One or two lined
-    # ex: string say_hi() return print("Hi")
+    # ex: fun say_hi() return print("Hi")
     else:
       init = self.tokens.current
       # Skip only one line
