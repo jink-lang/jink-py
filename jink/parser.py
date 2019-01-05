@@ -60,19 +60,11 @@ class Parser:
       self.tokens._next()
     return self.tokens.current
 
-  def parse_top(self, parse_type=None):
+  def parse_top(self):
     init = self.tokens.current
 
     if init == None:
       return
-
-    # For parsing function parameters
-    elif parse_type == 'params':
-      self.tokens._next()
-
-      if init.value in ('let', 'const'):
-        ident = self.consume('identifier')
-        return self.parse_assignment(init.value, ident.value)
 
     elif init.type != 'keyword':
       return self.parse_expr()
@@ -234,32 +226,48 @@ class Parser:
     body = self.parse_block()
     return Function(ident.value, params, body)
 
-  # Parse arguments and parameters
-  # For both function calls and function definitions, respectively
+  # Parse function parameters and call arguments
   def parse_args_params(self, location):
     self.consume('lparen')
     l = []
 
-    # TODO Fix
-    # if location = 'params':
-    #   # Function parameters
-    #   if _next.value in (',', ')', ':'):
-    #     if _next.value == ':':
-    #       self.tokens._next()
-    #       default = self.parse_expr()
-    #       return FunctionParameter(cur.value, init.value, default)
-    #     return FunctionParameter(cur.value, init.value, None)
+    # Function parameters
+    if location == 'params':
+      while True and self.tokens.current != None:
+        if self.tokens.current.value == ')':
+          self.consume('rparen')
+          break
 
-    while True and self.tokens.current != None:
-      if self.tokens.current.value == ')':
-        self.consume('rparen')
-        break
-      l.append(self.parse_top(location))
-      if self.tokens.current.value in (',', 'newline'):
-        self.consume(('comma', 'newline'), soft=True)
-      else:
-        self.consume('rparen')
-        break
+        cur = self.tokens._next()
+        if cur.type == 'keyword' and cur.value in ('let', 'const'):
+          ident = self.consume('identifier')
+          _next = self.tokens.current
+          if _next.type in ('comma', 'operator') and _next.value in (',', ':'):
+            if _next.value == ':':
+              self.tokens._next()
+              default = self.parse_expr()
+              l.append(FunctionParameter(ident.value, cur.value, default))
+              self.tokens._next()
+            elif _next.value == ',':
+              l.append(FunctionParameter(ident.value, cur.value, None))
+              self.tokens._next()
+          else:
+            l.append(FunctionParameter(ident.value, cur.value, None))
+        else:
+          raise Exception(f"Expected let or const, got {cur.value}.")
+
+    # Call arguments
+    else:
+      while True and self.tokens.current != None:
+        if self.tokens.current.value == ')':
+          self.consume('rparen')
+          break
+        l.append(self.parse_top())
+        if self.tokens.current.value in (',', 'newline'):
+          self.consume(('comma', 'newline'), soft=True)
+        else:
+          self.consume('rparen')
+          break
     return l
 
   # Return parsing
