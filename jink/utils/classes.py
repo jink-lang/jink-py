@@ -150,7 +150,7 @@ class CallExpression:
   def __init__(self, name, args):
     self.name, self.args = name, args
   def __str__(self):
-    return f"{{ 'type': 'CallExpression', 'contents': {{ 'name': '{self.name}', 'args': {self.args} }} }}"
+    return f"{{ 'type': 'CallExpression', 'contents': {{ 'name': '{self.name.name}', 'args': {self.args} }} }}"
   __repr__ = __str__
 
 class Function:
@@ -166,7 +166,7 @@ class FunctionParameter:
   def __init__(self, name, _type, default=None):
     self.name, self.type, self.default = name, _type, default
   def __str__(self):
-    return f"{{ 'type': 'FunctionParameter', 'contents': {{ 'name': '{self.name}', 'type': {self.type}, 'default': '{self.default}' }} }}"
+    return f"{{ 'type': 'FunctionParameter', 'contents': {{ 'name': '{self.name}', 'type': '{self.type}', 'default': '{self.default}' }} }}"
   __repr__ = __str__
 
 class Return:
