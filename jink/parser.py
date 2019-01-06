@@ -165,7 +165,8 @@ class Parser:
       elif self.tokens.current.value == '(':
         return self.parse_call(ident)
       elif self.tokens.current.value == '=':
-        return self.parse_assignment(None, ident, self.tokens.current)
+        self.tokens._next()
+        return self.parse_assignment(None, ident)
       else:
         return IdentLiteral(ident)
 
