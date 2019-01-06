@@ -27,7 +27,7 @@ class Lexer:
     return [token for token in self.parse_tokens()]
 
   def parse_literal(self, code):
-    return str(self.parse(code))
+    return str([token.smallStr() for token in self.parse(code)])
 
   def parse_tokens(self):
     while self.code.current is not None:
@@ -35,7 +35,7 @@ class Lexer:
       # All good, increment positions
       self.line_pos += 1
       self.pos += 1
-      
+
       char = self.code._next()
 
       if char == '\\':
@@ -58,7 +58,7 @@ class Lexer:
           self.process_comment()
         else:
           yield self.parse_operator(char)
-      
+
       # Brackets
       elif char == '(':
         yield Token('lparen', '(', self.line, self.pos)

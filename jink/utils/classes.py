@@ -70,6 +70,8 @@ class Token:
   def __init__(self, _type, value, line, pos):
     self.type, self.value, self.line, self.pos = _type, value, line, pos
   def __str__(self):
+    return f"{{ 'type': 'Token<{self.type}>', 'contents': {{ 'value': '{self.value}', 'line': {self.line}, 'pos': {self.pos} }} }}"
+  def smallStr(self):
     return f"{{{self.type} {self.value}}}"
   __repr__ = __str__
 
@@ -79,7 +81,7 @@ class BinaryOperator:
   def __init__(self, operator, left, right):
     self.operator, self.left, self.right = operator, left, right
   def __str__(self):
-    return f"{{BinaryOperator {self.operator} {{left: {self.left}, right: {self.right}}}}}"
+    return f"{{ 'type': 'BinaryOperator', 'contents': {{ 'operator': '{self.operator}', 'left': '{self.left}', 'right': '{self.right}' }} }}"
   __repr__ = __str__
 
 class UnaryOperator:
@@ -87,7 +89,7 @@ class UnaryOperator:
   def __init__(self, operator, value):
     self.operator, self.value = operator, value
   def __str__(self):
-    return f"{{UnaryOperator {self.operator} {self.value}}}"
+    return f"{{ 'type': 'UnaryOperator', 'contents': {{ 'operator': '{self.operator}', 'value': '{self.value}' }} }}"
   __repr__ = __str__
 
 class IntegerLiteral:
@@ -95,7 +97,7 @@ class IntegerLiteral:
   def __init__(self, value):
     self.value = value
   def __str__(self):
-    return f"{{IntegerLiteral {self.value}}}"
+    return f"{{ 'type': 'IntegerLiteral', 'contents': {{ 'value': {self.value} }} }}"
   __repr__ = __str__
 
 class FloatingPointLiteral:
@@ -103,7 +105,7 @@ class FloatingPointLiteral:
   def __init__(self, value):
     self.value = value
   def __str__(self):
-    return f"{{FloatingPointLiteral {self.value}}}"
+    return f"{{ 'type': 'FloatingPointLiteral', 'contents': {{ 'value': {self.value} }} }}"
   __repr__ = __str__
 
 class StringLiteral:
@@ -111,7 +113,7 @@ class StringLiteral:
   def __init__(self, value):
     self.value = value
   def __str__(self):
-    return f"{{StringLiteral {self.value}}}"
+    return f"{{ 'type': 'StringLiteral', 'contents': {{ 'value': '{self.value}' }} }}"
   __repr__ = __str__
 
 class BooleanLiteral:
@@ -119,19 +121,19 @@ class BooleanLiteral:
   def __init__(self, value):
     self.value = value
   def __str__(self):
-    return f"{{BooleanLiteral {self.value}}}"
+    return f"{{ 'type': 'BooleanLiteral', 'contents': {{ 'value': '{self.value}' }} }}"
   __repr__ = __str__
 
 class IdentLiteral:
   def __init__(self, name, index={ 'type': None, 'index': None }):
     self.name, self.index = name, index
   def __str__(self):
-    return f"{{IdentLiteral {self.name} ({self.index['index'] or ''})}}"
+    return f"{{ 'type': 'IdentLiteral', 'contents': {{ 'name': '{self.name}', 'index': '{self.index['index'] or 'null'}' }} }}"
   __repr__ = __str__
 
 class Null:
   def __str__(self):
-    return '{{Null}}'
+    return f"{{ 'type': 'Null', 'contents': {{ value: 'null' }} }}"
   __repr__ = __str__
 
 
@@ -140,7 +142,7 @@ class Assignment:
   def __init__(self, _type, ident, value):
     self.type, self.ident, self.value = _type, ident, value
   def __str__(self):
-    return f"{{Assignment {self.ident} {self.value}}}"
+    return f"{{ 'type': 'Assignment', 'contents': {{ 'type': '{self.type}', 'ident': '{self.ident}', 'value': '{self.value}' }} }}"
   __repr__ = __str__
 
 class CallExpression:
@@ -148,7 +150,7 @@ class CallExpression:
   def __init__(self, name, args):
     self.name, self.args = name, args
   def __str__(self):
-    return f"{{CallExpression {self.name} {self.args}}}"
+    return f"{{ 'type': 'CallExpression', 'contents': {{ 'name': '{self.name}', 'args': {self.args} }} }}"
   __repr__ = __str__
 
 class Function:
@@ -156,7 +158,7 @@ class Function:
   def __init__(self, name, params, body):
     self.name, self.params, self.body = name, params, body
   def __str__(self):
-    return f"{{Function {self.name} {self.params} {self.body}}}"
+    return f"{{ 'type': 'Function', 'contents': {{ 'name': '{self.name}', 'params': {self.params}, 'body': {self.body} }} }}"
   __repr__ = __str__
 
 class FunctionParameter:
@@ -164,7 +166,7 @@ class FunctionParameter:
   def __init__(self, name, _type, default=None):
     self.name, self.type, self.default = name, _type, default
   def __str__(self):
-    return f"{{FunctionParameter {self.name} {self.type}}}"
+    return f"{{ 'type': 'FunctionParameter', 'contents': {{ 'name': '{self.name}', 'type': {self.type}, 'default': '{self.default}' }} }}"
   __repr__ = __str__
 
 class Return:
@@ -172,7 +174,7 @@ class Return:
   def __init__(self, expression):
     self.expression = expression
   def __str__(self):
-    return f"{{Return {self.expression}}}"
+    return f"{{ 'type': 'Return', contents: {{ 'expression': {self.expression} }} }}"
   __repr__ = __str__
 
 class Conditional:
@@ -181,5 +183,5 @@ class Conditional:
     self.type, self.expression, self.body, self.else_body = \
       _type, expression, body, else_body
   def __str__(self):
-    return f"{{Conditional {self.type} {self.expression} {self.body} {self.else_body}}}"
+    return f"{{ 'type': 'Conditional', 'contents': {{ 'type': '{self.type}', 'expression': {self.expression}, 'body': {self.body}, 'else_body': {self.else_body} }} }}"
   __repr__ = __str__
