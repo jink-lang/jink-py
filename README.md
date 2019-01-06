@@ -7,7 +7,7 @@
 
 > Jink is a simplistic, JavaScript-like programming language built using Python.
 
-I've built Jink to prove to myself that I can, not to make the most efficient, useful or mind-bending new language. I plan to support it for as long as I see fit, and contribution is very welcome. Thanks for checking it out!
+I've built Jink to prove to myself that I can, not to make the most efficient, useful or mind-bending new language. I plan to continue its development for as long as I can, and any contribution is very welcome. Thanks for checking it out!
 
 ## Progress Checklist
 
@@ -20,13 +20,15 @@ I've built Jink to prove to myself that I can, not to make the most efficient, u
 ## Example
 
 ```jink
-fun example_function(input) {
-    return ++input
+fun example_function(let in) {
+    return ++in
 }
 
-let output = example_function(1336)
-print(output) // Prints 1337 to the console!
+let out = example_function(1336)
+print(out) // Prints 1337 to the console!
 ```
+
+For more examples, check the `examples` folder.
 
 ## Installation
 
