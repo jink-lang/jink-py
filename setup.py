@@ -3,13 +3,10 @@ from cx_Freeze import setup, Executable
 import os
 
 build_exe_options={"include_msvcr": True}
-
 cwd = os.getcwd()
-
 base=None
 if sys.platform == "win32":
     base = "Console"
-
 
 setup(
     name="jink",
