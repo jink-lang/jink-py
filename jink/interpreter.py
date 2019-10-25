@@ -16,6 +16,7 @@ class Interpreter:
     if isinstance(expr, IdentLiteral):
       if None in (expr.index['type'], expr.index['index']):
         return self.env.get_var(expr.name)
+
       elif expr.index['type'] == 'prop':
         var = self.env.get_var(expr.name)
 
@@ -26,8 +27,10 @@ class Interpreter:
         if isinstance(expr.index['index'], IdentLiteral):
           if expr.index['index'].name not in obj:
             raise Exception(f"Object '{expr.name}' does not contain the property '{expr.index['index'].name}'")
+
           else:
             return obj[expr.index['index'].name]
+
         elif isinstance(expr.index['index'], CallExpression):
           pass
 
@@ -50,8 +53,10 @@ class Interpreter:
 
     elif isinstance(expr, Assignment):
       value = self.evaluate_top(expr.value)
+
       try:
         value = self.unwrap_value(value)
+
       except KeyError:
         pass
       return self.env.set_var(expr.ident.name, value if value != None else 'null', expr.type)
@@ -59,12 +64,16 @@ class Interpreter:
     elif isinstance(expr, Conditional):
       if hasattr(expr, 'expression') and expr.expression != None:
         result = self.evaluate_condition(self.evaluate_top(expr.expression))
+
         if result not in ('true', 'false'):
           raise Exception("Conditional improperly used.")
+
         elif result == 'true':
           return self.evaluate(expr.body, self.env)
+
         elif result == 'false' and expr.else_body:
           return self.evaluate_top(expr.else_body[0])
+
         else:
           return
       self.evaluate(expr.body, self.env)
@@ -87,11 +96,14 @@ class Interpreter:
   def evaluate_condition(self, cond):
     if cond in ('true', 'false'):
       return cond
+
     elif cond in (True, False):
       return 'true' if True else 'false'
+
     elif 'type' in cond:
       if cond['type'] == 'null':
         return 'false'
+
       elif cond['type'] != 'bool':
         return 'true'
 
@@ -118,17 +130,20 @@ class Interpreter:
           p = Object()
           setattr(p, 'name', name)
           setattr(p, 'type', _type)
+
         elif p.default:
           default = self.unwrap_value(p.default)
 
         if len(args) > i:
           value = args[i] if args[i] not in (None, 'null') else default or 'null'
+
         else:
           value = default if default not in (None, 'null') else 'null'
 
         if value != None:
           try:
             scope.set_var(p.name, value, p.type)
+
           except:
             raise Exception(f"Improper function parameter or call argument at function '{func.name}'.")
         i += 1
@@ -137,13 +152,17 @@ class Interpreter:
       _return = None
       for e in func.body:
         result = self.evaluate([e], scope)[0]
+
         if isinstance(result, list):
           result = result[0] if len(result) > 0 else []
+
         if result and isinstance(result, dict) and result['type'] == 'return':
           if isinstance(result['value'], bool):
             _return = 'true' if result['value'] == True else 'false'
+
           elif isinstance(result['value'], (int, float)):
             _return = result['value'] if result['value'] != None else 0
+
           else:
             _return = result['value']
           break
@@ -153,6 +172,7 @@ class Interpreter:
 
       if _return is None or (isinstance(_return, list) and (_return[0] in (None, 'null') or _return[0]['value'] is None)):
         return 'null'
+
       else:
         return _return
 
@@ -163,7 +183,9 @@ class Interpreter:
   def unwrap_value(self, v):
     if hasattr(v, 'value'):
       return v.value
+
     elif hasattr(v, '__getitem__') and not isinstance(v, (str, list)):
       return v['value']
+
     else:
       return v
