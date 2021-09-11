@@ -1,0 +1,7 @@
+// Fibonacci sequencer
+fun Fibonacci(let number) {
+  if (number <= 1) return number
+  return Fibonacci(number - 2) + Fibonacci(number - 1)
+}
+
+print(Fibonacci(10))
