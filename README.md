@@ -1,6 +1,6 @@
 # jink
 
-[![Build Status](https://travis-ci.org/jink-lang/jink.svg?branch=master)](https://travis-ci.org/jink-lang/jink)
+[![Build Status](https://app.travis-ci.com/jink-lang/jink.svg?branch=master)](https://app.travis-ci.com/jink-lang/jink)
 [![Discord](https://img.shields.io/discord/365599795886161941?label=Discord)](https://discord.gg/cWzcQz2)
 ![License](https://img.shields.io/github/license/jink-lang/jink)
 ![GitHub Repo stars](https://img.shields.io/github/stars/jink-lang/jink?style=social)
