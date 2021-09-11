@@ -1,6 +1,10 @@
-from .utils.names import *
-from .utils.classes import *
-from .utils.future_iter import FutureIter
+from jink.utils.names import *
+from jink.utils.classes import *
+from jink.utils.future_iter import FutureIter
+from jink.utils.func import pickle
+import json
+
+PRNTLINE = "\n--------------------------------\n"
 
 class Parser:
   def __init__(self):
@@ -25,29 +29,33 @@ class Parser:
       self.tokens._next()
       if isinstance(item, tuple):
         if current.type not in item:
-          raise Exception(f"Expected {' or '.join(item)}, got {current.type} on line {current.line}.")
+          raise Exception(f"Expected {' or '.join(item)}, got '{current.type}' on line {current.line}.")
         else:
           return current
       else:
         # Strings have text that could be used to spoof this check so I account for them here
-        if current.value == item and current.type != 'string':
+        if current.value == item and current.type != TokenType.STRING:
           return current
         elif current.type == item:
           return current
         raise Exception(f"Expected '{item}', got '{current.type}' on line {current.line}.")
 
-  def parse(self, tokens):
+  def parse(self, tokens, verbose=False):
     self.tokens = FutureIter(tokens)
-    program = []
+    ast = []
     while self.tokens.current is not None:
-      if self.tokens.current.type != 'newline':
-        program.append(self.parse_top())
+      if self.tokens.current.type != TokenType.NEWLINE:
+        ast.append(self.parse_top())
       else:
         self.tokens._next()
-    return program
+
+    if verbose:
+      print("AST:", PRNTLINE, json.dumps(pickle(ast), indent=2), PRNTLINE)
+
+    return ast
 
   def parse_literal(self, tokens):
-    return str(self.parse(tokens))
+    return self.parse(tokens)
 
   def parse_to_console(self, tokens):
     program = self.parse(tokens)
@@ -55,7 +63,7 @@ class Parser:
       print(expr)
 
   def skip_newlines(self, count=-1):
-    while self.tokens.current != None and self.tokens.current.type == 'newline' and count != 0:
+    while self.tokens.current != None and self.tokens.current.type == TokenType.NEWLINE and count != 0:
       count -= 1
       self.tokens._next()
     return self.tokens.current
@@ -66,16 +74,16 @@ class Parser:
     if init == None:
       return
 
-    elif init.type != 'keyword':
+    elif init.type != TokenType.KEYWORD:
       return self.parse_expr()
 
     elif init.value in ('let', 'const'):
       self.tokens._next()
-      ident = self.consume('identifier')
+      ident = self.consume(TokenType.IDENTIFIER)
       cur = self.tokens.current
 
       # Assignments
-      if (cur.type == 'operator' and cur.value == '=') or cur.type in ('newline', 'semicolon'):
+      if (cur.type == TokenType.OPERATOR and cur.value == '=') or cur.type in (TokenType.NEWLINE, TokenType.SEMICOLON):
         self.tokens._next()
         return self.parse_assignment(init.value, ident.value)
 
@@ -103,7 +111,7 @@ class Parser:
     left = self.parse_primary()
     current = self.tokens.current
 
-    while current and current.type == 'operator' and self.get_precedence(current) >= precedence:
+    while current and current.type == TokenType.OPERATOR and self.get_precedence(current) >= precedence:
       operator = self.tokens._next()
       if operator.value in ('++', '--'):
         return UnaryOperator(operator.value + ':post', left)
@@ -117,8 +125,8 @@ class Parser:
 
       current = self.tokens.current
 
-    if current and current.type == 'semicolon':
-      self.consume('semicolon')
+    if current and current.type == TokenType.SEMICOLON:
+      self.consume(TokenType.SEMICOLON)
 
     return left
 
@@ -136,27 +144,27 @@ class Parser:
       return UnaryOperator(operator.value, value)
 
     elif current.value == '(':
-      self.consume('lparen')
+      self.consume(TokenType.LPAREN)
       value = self.parse_expr(0)
-      self.consume('rparen')
+      self.consume(TokenType.RPAREN)
       return value
 
     elif current.value == '{':
-      self.consume('lbrace')
+      self.consume(TokenType.LBRACE)
       obj = self.parse_object()
-      self.consume('rbrace')
+      self.consume(TokenType.RBRACE)
       return obj
 
-    elif current.type == 'number':
+    elif current.type == TokenType.NUMBER:
       current = self.tokens._next()
       if current.value.count('.') > 0:
         return FloatingPointLiteral(float(current.value))
       return IntegerLiteral(int(current.value))
 
-    elif current.type == 'string':
+    elif current.type == TokenType.STRING:
       return StringLiteral(self.tokens._next().value)
 
-    elif current.type == 'identifier':
+    elif current.type == TokenType.IDENTIFIER:
       ident = self.tokens._next().value
       if self.tokens.current.value == '.':
         self.tokens._next()
@@ -170,7 +178,7 @@ class Parser:
       else:
         return IdentLiteral(ident)
 
-    elif current.type == 'keyword':
+    elif current.type == TokenType.KEYWORD:
       keyword = self.tokens._next().value
       if keyword in ('true', 'false'):
         return BooleanLiteral(keyword)
@@ -183,13 +191,13 @@ class Parser:
 
   def is_unary_operator(self, token):
     if hasattr(token, 'type'):
-      if token.type == 'string':
+      if token.type == TokenType.STRING:
         return False
     return token.value in ('-', '+', '++', '--', '!')
 
   def is_left_associative(self, token):
     if hasattr(token, 'type'):
-      if token.type == 'string':
+      if token.type == TokenType.STRING:
         return False
     return token.value not in ('++', '--', '+=', '-=', '=')
 
@@ -204,16 +212,16 @@ class Parser:
       return 0
 
   def parse_assignment(self, var_type, name):
-    if self.tokens.current.type in ('newline', 'semicolon', 'comma'):
+    if self.tokens.current.type in (TokenType.NEWLINE, TokenType.SEMICOLON, TokenType.COMMA):
       assignment = Assignment(var_type, IdentLiteral(name), None)
-    elif self.tokens.current.type == 'rparen':
+    elif self.tokens.current.type == TokenType.RPAREN:
       assignment = Assignment(var_type, IdentLiteral(name), None)
       return assignment
     else:
       assignment = Assignment(var_type, IdentLiteral(name), self.parse_expr())
 
-    if self.tokens.current != None and self.tokens.current.type != 'comma':
-      self.consume(('newline', 'semicolon'))
+    if self.tokens.current != None and self.tokens.current.type != TokenType.COMMA:
+      self.consume((TokenType.NEWLINE, TokenType.SEMICOLON))
 
     return assignment
 
@@ -222,28 +230,37 @@ class Parser:
     return CallExpression(IdentLiteral(func_name), args)
 
   def parse_function(self):
-    ident = self.consume('identifier')
+    ident = self.consume(TokenType.IDENTIFIER)
     params = self.parse_args_params('params')
     body = self.parse_block()
     return Function(ident.value, params, body)
 
   # Parse function parameters and call arguments
   def parse_args_params(self, location):
-    self.consume('lparen')
+    self.consume(TokenType.LPAREN)
     l = []
 
     # Function parameters
     if location == 'params':
       while True and self.tokens.current != None:
         if self.tokens.current.value == ')':
-          self.consume('rparen')
+          self.consume(TokenType.RPAREN)
+          break
+        elif self.tokens.current.value == '{':
           break
 
         cur = self.tokens._next()
-        if cur.type == 'keyword' and cur.value in ('let', 'const'):
-          ident = self.consume('identifier')
+        if cur.type == TokenType.KEYWORD and cur.value in ('let', 'const'):
+          ident = self.consume(TokenType.IDENTIFIER)
           _next = self.tokens.current
-          if _next.type in ('comma', 'operator') and _next.value in (',', ':'):
+
+          # Close out function params
+          if _next.type == TokenType.RPAREN:
+            l.append(FunctionParameter(ident.value, cur.value, None))
+
+          # Expect comma or colon
+          # fun test(let a<,> let b<:> 10) {}
+          elif _next.type in (TokenType.COMMA, TokenType.OPERATOR) and _next.value in (',', ':'):
             if _next.value == ':':
               self.tokens._next()
               default = self.parse_expr()
@@ -253,31 +270,31 @@ class Parser:
               l.append(FunctionParameter(ident.value, cur.value, None))
               self.tokens._next()
           else:
-            l.append(FunctionParameter(ident.value, cur.value, None))
+            raise Exception(f"Expected comma or colon, got '{cur.value}' on line {cur.line}.")
         else:
-          raise Exception(f"Expected let or const, got {cur.value}.")
+          raise Exception(f"Expected let or const, got '{cur.value}' on line {cur.line}.")
 
     # Call arguments
     else:
       while True and self.tokens.current != None:
         if self.tokens.current.value == ')':
-          self.consume('rparen')
+          self.consume(TokenType.RPAREN)
           break
         l.append(self.parse_top())
         if self.tokens.current.value in (',', 'newline'):
-          self.consume(('comma', 'newline'), soft=True)
+          self.consume((TokenType.COMMA, TokenType.NEWLINE), soft=True)
         else:
-          self.consume('rparen')
+          self.consume(TokenType.RPAREN)
           break
     return l
 
   # Return parsing
   def parse_return(self):
     self.tokens._next()
-    if self.tokens.current.type == 'semicolon':
+    if self.tokens.current.type == TokenType.SEMICOLON:
       self.tokens._next()
       return Return(None)
-    if self.tokens.current.type == 'newline':
+    if self.tokens.current.type == TokenType.NEWLINE:
       return Return(None)
     expr = self.parse_expr()
     return Return(expr)
@@ -292,15 +309,15 @@ class Parser:
 
     body = []
     else_body = []
-    self.consume('lparen')
+    self.consume(TokenType.LPAREN)
     expr = self.parse_expr()
-    self.consume('rparen')
+    self.consume(TokenType.RPAREN)
     body = self.parse_block()
 
     # If an else case is next
     self.skip_newlines()
     _next = self.tokens.current
-    if _next and _next.type == 'keyword' and _next.value in ('elseif', 'else'):
+    if _next and _next.type == TokenType.KEYWORD and _next.value in ('elseif', 'else'):
       else_body.append(self.parse_conditional())
 
     return Conditional(init.value, expr, body, else_body)
@@ -309,13 +326,13 @@ class Parser:
   def parse_block(self):
     body = []
     if self.tokens.current.value == '{':
-      self.consume('lbrace')
+      self.consume(TokenType.LBRACE)
       self.skip_newlines()
-      while self.tokens.current is not None and self.tokens.current.value is not '}':
+      while self.tokens.current != None and self.tokens.current.value != '}':
         body.append(self.parse_top())
         self.skip_newlines()
       if self.tokens._next() == None:
-        raise Exception(f"Expected '}}', got {self.tokens.current.value} on line {self.tokens.current.line}.")
+        raise Exception(f"Expected '}}', got '{self.tokens.current.value}' on line {self.tokens.current.line}.")
 
     # One or two lined
     # ex: fun say_hi() return print("Hi")
@@ -324,7 +341,7 @@ class Parser:
       # Skip only one line
       # If there is more space before an expression, you're doing it wrong kiddo
       self.skip_newlines(1)
-      if self.tokens.current.type == 'newline':
+      if self.tokens.current.type == TokenType.NEWLINE:
         raise Exception(f"Empty function body on line {init.line}.")
       body.append(self.parse_top())
 
@@ -332,26 +349,26 @@ class Parser:
 
   def parse_kv_pair(self):
     self.skip_newlines()
-    k = self.consume(('identifier', 'string')).value
+    k = self.consume((TokenType.IDENTIFIER, TokenType.STRING)).value
     self.consume(':')
-    if self.tokens.current.type == 'lbrace':
-      self.consume('lbrace')
+    if self.tokens.current.type == TokenType.LBRACE:
+      self.consume(TokenType.LBRACE)
       v = self.parse_object()
-      self.consume('rbrace')
+      self.consume(TokenType.RBRACE)
     else:
-      v = self.consume(('identifier', 'string')).value
+      v = self.consume((TokenType.IDENTIFIER, TokenType.STRING)).value
     return k, v
 
   def parse_object(self):
     obj = {}
-    while self.tokens.current is not None and self.tokens.current.type is not 'rbrace':
+    while self.tokens.current is not None and self.tokens.current.type is not TokenType.RBRACE:
       k, v = self.parse_kv_pair()
       obj[k] = v
       self.skip_newlines()
-      if self.tokens.current.type == 'rbrace':
+      if self.tokens.current.type == TokenType.RBRACE:
         break
-      self.consume('comma')
+      self.consume(TokenType.COMMA)
 
     if self.tokens.current.value != '}':
-      raise Exception(f"Expected '}}', got {self.tokens.current.value} on line {self.tokens.current.line}.")
+      raise Exception(f"Expected '}}', got '{self.tokens.current.value}' on line {self.tokens.current.line}.")
     return obj

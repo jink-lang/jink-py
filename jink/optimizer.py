@@ -1,5 +1,5 @@
-from .utils.classes import *
-from .utils.evals import *
+from jink.utils.classes import *
+from jink.utils.evals import *
 
 def optimize(ast):
   optimized = []
@@ -28,10 +28,17 @@ def const_fold(expr):
     elif isinstance(left, (FloatingPointLiteral, IntegerLiteral)) and isinstance(right, (FloatingPointLiteral, IntegerLiteral)):
       return FloatingPointLiteral(BINOP_EVALS[expr.operator](left.value, right.value))
 
+    # String concatenation
     elif isinstance(left, StringLiteral) and isinstance(right, StringLiteral):
       if expr.operator != '+':
-        raise Exception(f"Only '+' operator can be used with strings.")
+        raise Exception(f"Only '+' operator can be used for string/string binop.")
       return StringLiteral(str(left.value) + str(right.value))
+
+    # String multiplication
+    elif isinstance(left, StringLiteral) and isinstance(right, IntegerLiteral):
+      if expr.operator != '*':
+        raise Exception(f"Only '*' operator can be used for string/int binop.")
+      return StringLiteral(str(left.value)*right.value)
 
   elif isinstance(expr, Assignment):
     expr.value = const_fold(expr.value)

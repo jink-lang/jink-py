@@ -1,5 +1,93 @@
-from .utils.classes import *
-from .utils.evals import *
+from jink.utils.classes import *
+from jink.utils.evals import *
+
+TYPES = {
+  int: 'int',
+  float: 'float',
+  str: 'string',
+  dict: 'obj'
+}
+
+# The interpreter environment
+class Environment:
+  def __init__(self, parent=None, s_type=None, debug=False):
+    self._id = parent._id + 1 if parent else 0
+    self.index = {}
+    self.parent = parent
+    self.type = s_type
+    self.debug = debug
+
+  # To define builtin methods - only for use on the top level interpreter environment
+  def add_builtins(self):
+    self.def_func('print', lambda scope, args: print('\n'.join([str(x) for x in args]) or 'null'))
+    self.def_func('string', lambda scope, args: [str(x or 'null') for x in args][0] if len(args) == 1 else [str(x or 'null') for x in args])
+    self.def_func('input', lambda scope, args: input(' '.join(args)))
+
+  def extend(self, s_type):
+    return Environment(self, s_type)
+
+  def find_scope(self, name):
+    if self.debug:
+      print(f"Searching for {name} in scopes..")
+    scope = self
+    while scope:
+      if self.debug:
+        print(f"Searching {scope._id}.. found {list(self.index.keys())}")
+      if name in scope.index:
+        return scope
+      scope = scope.parent
+
+  def get_var(self, name):
+    scope = self.find_scope(name)
+    if not scope:
+      raise Exception(f"{name} is not defined.")
+
+    elif name in scope.index:
+      return scope.index[name]
+
+    raise Exception(f"{name} is not defined.")
+
+  # Functions override to update values
+  # from parent scopes in local scope during their lifecycle
+  def set_var(self, name, value, var_type=None, fn_scoped=False):
+    scope = self.find_scope(name)
+
+    for py_type, _type in TYPES.items():
+      if isinstance(value, py_type):
+        val_type = _type
+    
+    if fn_scoped:
+      self.index[name] = { 'value': value, 'type': val_type, 'var_type': var_type }
+      return value
+
+    # Assignments
+    if scope:
+      v = scope.get_var(name)
+
+      if var_type != None:
+        raise Exception(f"{name} is already defined.")
+      elif v['var_type'] == 'const':
+        raise Exception(f"Constant {name} is not reassignable.")
+
+      scope.index[name]['value'] = value
+      scope.index[name]['type'] = val_type
+
+    # Definitions
+    else:
+      if not var_type:
+        raise Exception(f"Expected let or const, got 'null' for {name}.")
+      self.index[name] = { 'value': value, 'type': val_type, 'var_type': var_type }
+
+    return value
+
+  def def_func(self, name, func):
+    if self.debug:
+      print(f"Defining {name} in {self._id}")
+    self.index[name] = func
+    return func
+
+  def __str__(self):
+    return f"{self.parent or 'null'}->{self._id}:{list(self.index.keys())}"
 
 class Interpreter:
   def __init__(self):
@@ -28,8 +116,10 @@ class Interpreter:
             raise Exception(f"Object '{expr.name}' does not contain the property '{expr.index['index'].name}'")
           else:
             return obj[expr.index['index'].name]
+
+        # TODO: Object methods, classes.
         elif isinstance(expr.index['index'], CallExpression):
-          pass
+          return self.call_function(expr.index['index'])
 
     elif isinstance(expr, (StringLiteral, IntegerLiteral, FloatingPointLiteral)):
       return self.unwrap_value(expr)
@@ -40,6 +130,8 @@ class Interpreter:
     elif isinstance(expr, Null):
       return { 'type': 'null', 'value': 'null' }
 
+    # TODO Properly evaluate unary operators modifying variables
+    # (e.g. pre and post increment ++i and i++)
     elif isinstance(expr, UnaryOperator):
       value = self.evaluate_top(expr.value)
       return UNOP_EVALS[expr.operator](self.unwrap_value(value)) or 0
@@ -70,17 +162,15 @@ class Interpreter:
       self.evaluate(expr.body, self.env)
 
     elif isinstance(expr, CallExpression):
-      scope = self.env.extend('call')
-      func = self.evaluate_top(expr.name)
-      return func(scope, [self.unwrap_value(self.evaluate_top(arg)) for arg in expr.args])
+      return self.call_function(expr)
 
     elif isinstance(expr, Function):
       return self.make_function(expr)
 
     elif isinstance(expr, Return):
-      result = self.evaluate_top(expr.expression)
+      result = self.evaluate_top(expr.value)
       return { 'type': 'return', 'value': self.unwrap_value(result) }
-    
+
     elif isinstance(expr, dict):
       return expr
 
@@ -95,6 +185,12 @@ class Interpreter:
       elif cond['type'] != 'bool':
         return 'true'
 
+  # Call a function in a new scope
+  def call_function(self, expr):
+    scope = self.env.extend(f"call_{expr.name.name}")
+    func = self.evaluate_top(expr.name)
+    return func(scope, [self.unwrap_value(self.evaluate_top(arg)) for arg in expr.args])
+
   # Make a function
   def make_function(self, func):
     def function(scope, args):
@@ -104,21 +200,14 @@ class Interpreter:
       if len(args) > len(params):
         raise Exception(f"Function '{func.name}' takes {len(params)} arguments but {len(args)} were given.")
 
-      # Apply arguments to this call's scope, otherwise use function defaults if any
+      # Apply arguments to this call's scope
+      # If argument doesn't exist use function default if it exists
       i = 0
 
       for p in params:
         default = None
 
-        if isinstance(p, Assignment):
-          default = p.value or 'null'
-          name = p.ident.name
-          _type = p.type
-          class Object(): pass
-          p = Object()
-          setattr(p, 'name', name)
-          setattr(p, 'type', _type)
-        elif p.default:
+        if p.default:
           default = self.unwrap_value(p.default)
 
         if len(args) > i:
@@ -128,9 +217,9 @@ class Interpreter:
 
         if value != None:
           try:
-            scope.set_var(p.name, value, p.type)
-          except:
-            raise Exception(f"Improper function parameter or call argument at function '{func.name}'.")
+            scope.set_var(p.name, value, p.type, fn_scoped=True)
+          except Exception as e:
+            raise Exception(f"{e}\nException: Improper function parameter or call argument at function '{func.name}'.")
         i += 1
 
       # Ensure returning of the correct value

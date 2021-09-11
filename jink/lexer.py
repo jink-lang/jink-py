@@ -1,6 +1,6 @@
-from .utils.names import *
-from .utils.classes import Token
-from .utils.future_iter import FutureIter
+from jink.utils.names import *
+from jink.utils.classes import Token, TokenType
+from jink.utils.future_iter import FutureIter
 
 KEYWORDS = KEYWORDS + TYPES
 
@@ -50,7 +50,7 @@ class Lexer:
         if char == '\n':
           self.line_pos = 0
           self.line += 1
-          yield Token('newline', 'newline', self.line, self.pos)
+          yield Token(TokenType.NEWLINE, 'newline', self.line, self.pos)
 
       # Comments
       elif char == '/':
@@ -61,23 +61,23 @@ class Lexer:
 
       # Brackets
       elif char == '(':
-        yield Token('lparen', '(', self.line, self.pos)
+        yield Token(TokenType.LPAREN, '(', self.line, self.pos)
       elif char == ')':
-        yield Token('rparen', ')', self.line, self.pos)
+        yield Token(TokenType.RPAREN, ')', self.line, self.pos)
       elif char == '[':
-        yield Token('lbracket', '[', self.line, self.pos)
+        yield Token(TokenType.LBRACKET, '[', self.line, self.pos)
       elif char == ']':
-        yield Token('rbracket', ']', self.line, self.pos)
+        yield Token(TokenType.RBRACKET, ']', self.line, self.pos)
       elif char == '{':
-        yield Token('lbrace', '{', self.line, self.pos)
+        yield Token(TokenType.LBRACE, '{', self.line, self.pos)
       elif char == '}':
-        yield Token('rbrace', '}', self.line, self.pos)
+        yield Token(TokenType.RBRACE, '}', self.line, self.pos)
 
       elif char == ';':
-        yield Token('semicolon', ';', self.line, self.pos)
+        yield Token(TokenType.SEMICOLON, ';', self.line, self.pos)
 
       elif char == ',':
-        yield Token('comma', ',', self.line, self.pos)
+        yield Token(TokenType.COMMA, ',', self.line, self.pos)
 
       elif char in ("'", '"'):
         yield self.parse_string(char)
@@ -104,8 +104,8 @@ class Lexer:
       self.code._next()
       self.line_pos += 1
     if ident in KEYWORDS:
-      return Token('keyword', ident, self.line, self.pos)
-    return Token('identifier', ident, self.line, self.pos)
+      return Token(TokenType.KEYWORD, ident, self.line, self.pos)
+    return Token(TokenType.IDENTIFIER, ident, self.line, self.pos)
 
   # 2 + 2 = 4 - 1 = 3
   def parse_operator(self, operator):
@@ -119,7 +119,7 @@ class Lexer:
       raise Exception('Invalid operator on {0}:{1}\n  {2}\n  {3}'.format(
         self.line, line_start, str(self.code).split('\n')[self.line - 1], f"{' ' * (line_start - 1)}^"
       ))
-    return Token('operator', operator, self.line, start)
+    return Token(TokenType.OPERATOR, operator, self.line, start)
 
   # Yay, I can "Hello world" now!
   def parse_string(self, char):
@@ -163,7 +163,7 @@ class Lexer:
         self.line, start, str(self.code).split('\n')[self.line - 1], f"{' ' * (start - 1)}^"
       ))
 
-    return Token('string', string, self.line, start)
+    return Token(TokenType.STRING, string, self.line, start)
 
   # Crunch those numbers.
   def parse_number(self, char):
@@ -180,7 +180,7 @@ class Lexer:
         self.line, line_start, str(self.code).split('\n')[self.line - 1], f"{' ' * (line_start - 1)}^"
       ))
     else:
-      return Token('number', num, self.line, self.pos)
+      return Token(TokenType.NUMBER, num, self.line, self.pos)
 
   # Do I really need to comment on comments?
   def process_comment(self):

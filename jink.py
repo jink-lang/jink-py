@@ -1,44 +1,70 @@
-import sys
-import json
+import sys, argparse
+from jink import optimizer
 from jink.lexer import Lexer
 from jink.parser import Parser
 from jink.optimizer import optimize
-from jink.interpreter import Interpreter
-from jink.utils.classes import Environment
+from jink.interpreter import Interpreter, Environment
 from jink.repl import REPL
-lexer = Lexer()
-parser = Parser()
-interpreter = Interpreter()
-env = Environment()
+# from jink.compiler import Compiler
 
-env.def_func('print', lambda scope, args: print('\n'.join([str(x) for x in args]) or 'null'))
-env.def_func('string', lambda scope, args: [str(x or 'null') for x in args][0] if len(args) == 1 else [str(x or 'null') for x in args])
-env.def_func('input', lambda scope, args: input(' '.join(args)))
-
-code = ''
-if len(sys.argv) > 1 and '-v' not in sys.argv:
-  sys.argv.pop(0)
-  _path = ' '.join(sys.argv)
-  if not _path.endswith('.jk'):
-    _path += '.jk'
-  code = open(_path).read()
-
+def get_code_from_path(path):
+  if not path.endswith('.jk'):
+    path += '.jk'
+  code = open(path).read()
   if not code:
     raise Exception(f"Error reading file {sys.argv[0]}")
+  return code
 
-  AST = optimize(parser.parse(lexer.parse(code)))
+if len(sys.argv) >= 1 and sys.argv[0] == 'jink.py':
+  sys.argv.pop(0)
 
-  # For testing (printing the AST)
-  # _AST = ""
-  # for expr in AST:
-  #   _AST += (f"{expr}, ").replace("'", '"')
-  # print(_AST[:-2])
+verbose = False
+to_compile = False
 
-  interpreter.evaluate(AST, env)
-else:
-  if '-v' in sys.argv:
-    repl = REPL(sys.stdin, sys.stdout, env, verbose=True)
+if '-v' in sys.argv:
+  sys.argv.remove('-v')
+  verbose = True
+if '-c' in sys.argv:
+  sys.argv.remove('-c')
+
+# Launch REPL
+if len(sys.argv) == 0 or (len(sys.argv) == 1 and sys.argv[0] == '-v'):
+  print("jink REPL - use '[jink] help' for help - type 'exit' to exit.")
+  repl = REPL(sys.stdin, sys.stdout, verbose=verbose)
+  repl.main_loop()
+
+elif len(sys.argv) >= 1:
+  if sys.argv[0] == 'help':
+    print('\n'.join([
+      "jink - strongly typed, JavaScript-like programming language.",
+      "https://www.github.com/jink-lang/jink",
+      "",
+      "args:",
+      "  > -v -- verbose; will output AST." # and if compiling, both optimized and unoptimized LLVM IR.",
+      # "  > -c -- compile; will use compiler instead of interpreter."
+      "",
+      "usage:",
+      "  > [jink] help                 -- shows this prompt.",
+      "  > [jink] path/to/file[.jk]    -- executes interpreter on file.",
+      "  > [jink] -v path/to/file[.jk] -- executes interpreter on file verbose mode.",
+      # "  > [jink] -c path/to/file[.jk] -- executes compiler on file.",
+      # "  > [jink] -c -v path/to/file[.jk] -- executes compiler on file in verbose mode.",
+      "  > [jink]                      -- launches interpreted interactive REPL.",
+      "  > [jink] -v                   -- launches interpreted interactive REPL in verbose mode."
+    ]))
+
   else:
-    repl = REPL(sys.stdin, sys.stdout, env)
-  while True:
-    repl.main_loop()
+    path = ' '.join(sys.argv)
+    code = get_code_from_path(path)
+
+    if to_compile:
+      raise NotImplementedError("Compiler not yet implemented.")
+      # Compiler()._eval(code, optimize=True, verbose=verbose)
+    else:
+      AST = optimize(Parser().parse(Lexer().parse(code), verbose=verbose))
+      env = Environment()
+      env.add_builtins()
+      Interpreter().evaluate(AST, env)
+
+if __name__ == "__main__":
+  pass

@@ -2,14 +2,14 @@ import sys
 from jink.lexer import Lexer
 from jink.parser import Parser
 from jink.optimizer import optimize
-from jink.interpreter import Interpreter
-from jink.utils.classes import Environment
-
+from jink.interpreter import Interpreter, Environment
+from jink.utils.classes import TokenType
 
 class REPL:
-  def __init__(self, stdin, stdout, environment=Environment(), lexer=Lexer(), parser=Parser(), interpreter=Interpreter()):
+  def __init__(self, stdin, stdout, environment=Environment(), lexer=Lexer(), parser=Parser(), interpreter=Interpreter(), verbose=False):
     self.stdin = stdin
     self.stdout = stdout
+    self.verbose = verbose
     self.env = environment
     self.lexer = lexer
     self.parser = parser
@@ -28,14 +28,16 @@ class REPL:
       self.run(line)
 
   def run(self, code):
+    if code == 'exit':
+      sys.exit(0)
     try:
       lexed = self.lexer.parse(code)
-      if len(lexed) == 1 and lexed[0].type == 'ident':
-        var = self.env.get_var(lexed[0].text)
+      if len(lexed) == 1 and lexed[0].type == TokenType.IDENTIFIER:
+        var = self.env.get_var(lexed[0].value)
         ret = var['value'] if var != None and isinstance(var, (dict)) else var or 'null'
         print(ret)
       else:
-        AST = optimize(self.parser.parse(lexed))
+        AST = optimize(self.parser.parse(lexed, verbose=self.verbose))
         e = self.interpreter.evaluate(AST, self.env)
         if len(e) == 1:
           print(e[0] if e[0] is not None else 'null')
