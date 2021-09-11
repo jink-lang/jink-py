@@ -1,21 +1,28 @@
 # jink
 
 [![Build Status](https://travis-ci.org/jink-lang/jink.svg?branch=master)](https://travis-ci.org/jink-lang/jink)
-[![Discord](https://img.shields.io/discord/365599795886161941.svg)](https://discord.gg/cWzcQz2)
-
+[![Discord](https://img.shields.io/discord/365599795886161941?label=Discord)](https://discord.gg/cWzcQz2)
+![License](https://img.shields.io/github/license/jink-lang/jink)
+![GitHub Repo stars](https://img.shields.io/github/stars/jink-lang/jink?style=social)
+![GitHub contributors](https://img.shields.io/github/contributors-anon/jink-lang/jink)
 ---
 
 > Jink is a simplistic, JavaScript-like programming language built using Python.
 
-I've built Jink to prove to myself that I can, not to make the most efficient, useful or mind-bending new language. I plan to continue its development for as long as I can, and any contribution is very welcome. Thanks for checking it out!
+## Purpose
 
-## Progress Checklist
+I built Jink to prove to myself that I could, not to make the most efficient, useful or mind-bending new language. I plan to work on it anytime I feel passionate about programming language design. Any contribution is very welcome. Thank you so much for checking it out!
 
-- [ ] Convert to compiler
-- [ ] Module support
-- [ ] File support
-- [ ] I/O support
-- [ ] Networking support
+## Goal Checklist
+
+(Not in or by any particular order or specification)
+
+- [✓] Interpreter & REPL
+- [ ] Compiler
+- [ ] Classes & OOP
+- [ ] Modularity & packaging
+- [ ] Filesystem read & write
+- [ ] Networking
 
 ## Example
 
