@@ -1,6 +1,8 @@
 import unittest
 from jink.lexer import Lexer
 from jink.parser import Parser
+from jink.optimizer import optimize
+from jink.interpreter import Interpreter, Environment
 from jink.utils.classes import *
 from jink.utils.func import pickle
 
@@ -101,6 +103,20 @@ class ParserTest(unittest.TestCase):
     )
     assert pickle(parsed) == pickle(test), "Issue in inline conditional parsing."
 
+class InterpreterTest(unittest.TestCase):
+  def setUp(self):
+    self.lexer = Lexer()
+    self.parser = Parser()
+    self.interpreter = Interpreter()
+    self.env = Environment()
+
+  def test_math(self):
+    """Ensures arithmetic is evaluated properly."""
+    code = "4 + 2 / 2"
+    tokens = self.lexer.parse(code)
+    parsed = optimize(self.parser.parse(tokens))
+    evaluated = self.interpreter.evaluate(parsed, self.env)[0]
+    assert evaluated == 5, "Issue in arithmetic evaluation."
 
 if __name__ == "__main__":
   unittest.main() # run all tests

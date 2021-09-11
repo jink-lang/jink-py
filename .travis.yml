@@ -2,4 +2,6 @@ language: python
 python:
   - "3.6"
   - "3.9"
+install:
+  - pip install jsonpickle
 script: python tests.py
