@@ -1,10 +1,10 @@
 # jink
 
-[![Build Status](https://app.travis-ci.com/jink-lang/jink.svg?branch=master)](https://app.travis-ci.com/jink-lang/jink)
+[![CircleCI](https://img.shields.io/circleci/build/github/jink-lang/jink?label=tests)](https://circleci.com/gh/jink-lang/jink/tree/master)
 [![Discord](https://img.shields.io/discord/365599795886161941?label=Discord)](https://discord.gg/cWzcQz2)
 ![License](https://img.shields.io/github/license/jink-lang/jink)
-![GitHub Repo stars](https://img.shields.io/github/stars/jink-lang/jink?style=social)
 ![GitHub contributors](https://img.shields.io/github/contributors-anon/jink-lang/jink)
+![GitHub Repo stars](https://img.shields.io/github/stars/jink-lang/jink?style=social)
 ---
 
 > Jink is a simplistic, JavaScript-like programming language built using Python.
