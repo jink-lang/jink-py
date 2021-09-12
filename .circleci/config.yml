@@ -1,0 +1,23 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@1.4.0
+
+# https://circleci.com/docs/2.0/configuration-reference/#workflows 
+workflows:
+  tests:
+    jobs:
+      - run-tests
+
+jobs:
+  run-tests:
+    docker:
+      - image: cimg/python:3.9.7
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          pip-dependency-file: requirements.txt  
+      - run:
+          name: Run tests
+          command: python tests.py
