@@ -55,7 +55,7 @@ class Environment:
     for py_type, _type in TYPES.items():
       if isinstance(value, py_type):
         val_type = _type
-    
+
     if fn_scoped:
       self.index[name] = { 'value': value, 'type': val_type, 'var_type': var_type }
       return value
@@ -81,8 +81,13 @@ class Environment:
     return value
 
   def def_func(self, name, func):
+    scope = self.find_scope(name)
+    if scope:
+      raise Exception(f"Function '{name}' is already defined!")
+
     if self.debug:
       print(f"Defining {name} in {self._id}")
+    
     self.index[name] = func
     return func
 
