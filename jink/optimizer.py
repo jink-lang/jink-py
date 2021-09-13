@@ -22,11 +22,14 @@ def const_fold(expr):
   elif isinstance(expr, BinaryOperator):
     left, right = const_fold(expr.left), const_fold(expr.right)
 
-    if isinstance(left, IntegerLiteral) and isinstance(right, IntegerLiteral):
-      return IntegerLiteral(int(BINOP_EVALS[expr.operator](left.value, right.value)))
+    # Evaluate result of binop
+    evaled = BINOP_EVALS[expr.operator](left.value, right.value)
 
-    elif isinstance(left, (FloatingPointLiteral, IntegerLiteral)) and isinstance(right, (FloatingPointLiteral, IntegerLiteral)):
-      return FloatingPointLiteral(BINOP_EVALS[expr.operator](left.value, right.value))
+    # Return corresponding value
+    if isinstance(evaled, int):
+      return IntegerLiteral(evaled)
+    elif isinstance(evaled, float):
+      return FloatingPointLiteral(evaled)
 
     # String concatenation
     elif isinstance(left, StringLiteral) and isinstance(right, StringLiteral):
