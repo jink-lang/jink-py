@@ -9,7 +9,7 @@ TYPES = (
 
 KEYWORDS = (
   'if', 'else', 'elseif',
-  'import', 'export',
+  'import',
   'return', 'delete', 'void',
   'true', 'false', 'null',
   'fun', 'let', 'const'

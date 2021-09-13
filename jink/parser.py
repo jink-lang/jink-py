@@ -77,6 +77,11 @@ class Parser:
     elif init.type != TokenType.KEYWORD:
       return self.parse_expr()
 
+    elif init.value == 'import':
+      # Skip 'import'
+      self.tokens._next()
+      return self.parse_module()
+
     elif init.value in ('let', 'const'):
       self.tokens._next()
       ident = self.consume(TokenType.IDENTIFIER)
@@ -210,6 +215,35 @@ class Parser:
       return 3
     else:
       return 0
+
+  # TODO Reverse nesting behaviour
+  def parse_module(self, name=None, index=None):
+
+    if self.tokens.current.type == None:
+      return Module(name, index)
+
+    if self.tokens.current.type in (TokenType.NEWLINE, TokenType.SEMICOLON):
+      self.consume((TokenType.NEWLINE, TokenType.SEMICOLON))
+      return Module(name, index)
+
+    # Expect package name
+    if self.tokens.current.type not in (TokenType.IDENTIFIER, TokenType.OPERATOR):
+      if self.tokens.current.type == TokenType.OPERATOR and self.tokens.current.value != '.':
+        raise Exception(f"Expected '.' got '{self.tokens.current.value}' on line {self.tokens.current.line}.")
+      raise Exception(f"Expected package index, got '{self.tokens.current.value}' on line {self.tokens.current.line}.")
+
+    # Store current index and move on
+    write_index = self.tokens._next()
+
+    module = Module(write_index.value, index)
+
+    if self.tokens.current.type in (TokenType.IDENTIFIER, TokenType.OPERATOR):
+      return self.parse_module(self.tokens.current.value, Module(write_index.value, index))
+
+    if self.tokens.current.type in (TokenType.NEWLINE, TokenType.SEMICOLON):
+      self.consume((TokenType.NEWLINE, TokenType.SEMICOLON))
+
+    return module
 
   def parse_assignment(self, var_type, name):
     if self.tokens.current.type in (TokenType.NEWLINE, TokenType.SEMICOLON, TokenType.COMMA):

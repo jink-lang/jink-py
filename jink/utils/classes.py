@@ -98,3 +98,8 @@ class Conditional:
   __slots__ = ('type', 'expression', 'body', 'else_body')
   def __init__(self, _type, expression, body, else_body):
     self.type, self.expression, self.body, self.else_body = _type, expression, body, else_body
+
+class Module:
+  __slots__ = ('name', 'index')  
+  def __init__(self, name, index):
+    self.name, self.index = name, index
