@@ -20,7 +20,7 @@ I built Jink to prove to myself that I could, not to make the most efficient, us
 - [✓] Interpreter & REPL
 - [ ] Compiler
 - [ ] Classes & OOP
-- [ ] Modularity & packaging
+- [½] Modularity & packaging
 - [ ] Filesystem read & write
 - [ ] Networking
 
@@ -91,4 +91,4 @@ I will set up a contribution guide when I can. In the meantime, feel free to pro
 
 This project is distributed under the MIT License - see the [license file](LICENSE) for details.
 
-Copyright © 2018 Jacob
+Copyright © 2018-2024 Jacob

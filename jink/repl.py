@@ -1,15 +1,16 @@
-import sys
+import os, sys
 from jink.lexer import Lexer
 from jink.parser import Parser
-from jink.optimizer import optimize
+from jink.optimizer import Optimizer
 from jink.interpreter import Interpreter, Environment
 from jink.utils.classes import TokenType
 
 class REPL:
-  def __init__(self, stdin, stdout, environment=Environment(), lexer=Lexer(), parser=Parser(), interpreter=Interpreter(), verbose=False):
+  def __init__(self, stdin, stdout, environment=Environment(), lexer=Lexer(), parser=Parser(), interpreter=Interpreter(), verbose=False, file_dir=None):
     self.stdin = stdin
     self.stdout = stdout
     self.verbose = verbose
+    self.dir = file_dir
     self.env = environment
     self.lexer = lexer
     self.parser = parser
@@ -37,8 +38,8 @@ class REPL:
         ret = var['value'] if var != None and isinstance(var, (dict)) else var or 'null'
         print(ret)
       else:
-        AST = optimize(self.parser.parse(lexed, verbose=self.verbose))
-        e = self.interpreter.evaluate(AST, self.env)
+        AST = Optimizer().optimize(self.parser.parse(lexed, verbose=self.verbose), verbose=self.verbose)
+        e = self.interpreter.evaluate(AST, self.env, verbose=self.verbose, file_dir=self.dir)
         if len(e) == 1:
           print(e[0] if e[0] is not None else 'null')
         else:

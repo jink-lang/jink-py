@@ -1,3 +1,6 @@
+from jink.lexer import Lexer
+from jink.parser import Parser
+from jink.optimizer import Optimizer
 from jink.utils.classes import *
 from jink.utils.evals import *
 
@@ -98,11 +101,21 @@ class Interpreter:
   def __init__(self):
     self.ast = []
 
-  def evaluate(self, ast, env):
+  def evaluate(self, ast, env, verbose=False, file_dir=None):
     self.env = env
+    self.verbose = verbose
+    self.dir = file_dir
     e = []
     for expr in ast:
-      e.append(self.evaluate_top(expr))
+      evaled = self.evaluate_top(expr)
+
+      # Unpack modules
+      if isinstance(evaled, list):
+        for mod_expr in evaled:
+          e.append(mod_expr)
+
+      else:
+        e.append(evaled)
     return e
 
   def evaluate_top(self, expr):
@@ -141,12 +154,50 @@ class Interpreter:
     # TODO Properly evaluate unary operators modifying variables
     # (e.g. pre and post increment ++i and i++)
     elif isinstance(expr, UnaryOperator):
+      # print(expr.value)
       value = self.evaluate_top(expr.value)
       return UNOP_EVALS[expr.operator](self.unwrap_value(value)) or 0
 
     elif isinstance(expr, BinaryOperator):
       left, right = self.evaluate_top(expr.left), self.evaluate_top(expr.right)
       return BINOP_EVALS[expr.operator](self.unwrap_value(left), self.unwrap_value(right)) or 0
+
+    elif isinstance(expr, Module):
+
+      # Get nested Modules
+      index = []
+      while expr:
+        index.insert(0, expr.name)
+        expr = expr.index
+
+      # Relative import
+      relative = False
+      if index[0] == '.':
+        index.pop()
+        relative = True
+
+      # Pretend like I know what I'm doing
+      # TODO Standard Library
+
+      try:
+        if relative:
+          module = (self.dir / f"{index[0]}.jk").open().read()
+        else:
+          # Is Directory
+          if (self.dir / index[0]).is_dir():
+            pass
+          # Is File
+          elif (self.dir / f"{index[0]}.jk").is_file():
+            module = (self.dir / f"{index[0]}.jk").open().read()
+          else:
+            raise Exception(f"Module '{index[0]}' not found at '{self.dir}'.")
+      except:
+        raise Exception(f"Failed to import module {index[0]}.")
+
+      lexed = Lexer().parse(module)
+      parsed = Parser().parse(lexed, self.verbose)
+      optimized = Optimizer().optimize(parsed, self.verbose)
+      return self.evaluate(optimized, self.env, self.verbose, self.dir)
 
     elif isinstance(expr, Assignment):
       value = self.evaluate_top(expr.value)
