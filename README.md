@@ -4,7 +4,7 @@
 [![Discord](https://img.shields.io/discord/365599795886161941?label=Discord)](https://discord.gg/cWzcQz2)
 ![License](https://img.shields.io/github/license/jink-lang/jink-py)
 ![GitHub contributors](https://img.shields.io/github/contributors-anon/jink-lang/jink-py)
-![GitHub Repo stars](https://img.shields.io/github/stars/jink-lang/jink?style=social)
+![GitHub Repo stars](https://img.shields.io/github/stars/jink-lang/jink-py?style=social)
 ---
 
 > A simplistic Jink interpreter built using Python.
