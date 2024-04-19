@@ -26,12 +26,12 @@ This is the original implementation of the [Jink](https://github.com/jink-lang/j
 ## Example
 
 ```js
-fun example_function(let num) {
-    return ++num
+fun add(let a, let b) {
+    return a + b
 }
 
-let out = example_function(1336)
-print(out) // Prints 1337 to the console!
+let c = add(1000, 337)
+print(c) // Print 1337 to the console!
 ```
 
 For more examples, check the [examples](./examples) folder.
