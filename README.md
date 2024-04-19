@@ -1,41 +1,40 @@
-# jink
+# Jink (Python Interpreter)
 
-[![CircleCI](https://img.shields.io/circleci/build/github/jink-lang/jink?label=tests)](https://circleci.com/gh/jink-lang/jink/tree/master)
+[![CircleCI](https://img.shields.io/circleci/build/github/jink-lang/jink-py?label=tests)](https://circleci.com/gh/jink-lang/jink-py/tree/master)
 [![Discord](https://img.shields.io/discord/365599795886161941?label=Discord)](https://discord.gg/cWzcQz2)
-![License](https://img.shields.io/github/license/jink-lang/jink)
-![GitHub contributors](https://img.shields.io/github/contributors-anon/jink-lang/jink)
+![License](https://img.shields.io/github/license/jink-lang/jink-py)
+![GitHub contributors](https://img.shields.io/github/contributors-anon/jink-lang/jink-py)
 ![GitHub Repo stars](https://img.shields.io/github/stars/jink-lang/jink?style=social)
 ---
 
-> Jink is a simplistic, JavaScript-like programming language built using Python.
+> A simplistic Jink interpreter built using Python.
 
-## Purpose
-
-I built Jink to prove to myself that I could, not to make the most efficient, useful or mind-bending new language. I plan to work on it anytime I feel passionate about programming language design. Any contribution is very welcome. Thank you so much for checking it out!
+## Jink
+This is the original implementation of the [Jink](https://github.com/jink-lang/jink) programming language. More information can be found at the new repo.
 
 ## Goal Checklist
 
 (Not in or by any particular order or specification)
 
 - [✓] Interpreter & REPL
-- [ ] Compiler
 - [ ] Classes & OOP
+- [ ] Arrays
 - [½] Modularity & packaging
 - [ ] Filesystem read & write
 - [ ] Networking
 
 ## Example
 
-```jink
-fun example_function(let in) {
-    return ++in
+```js
+fun example_function(let num) {
+    return ++num
 }
 
 let out = example_function(1336)
 print(out) // Prints 1337 to the console!
 ```
 
-For more examples, check the `examples` folder.
+For more examples, check the [examples](./examples) folder.
 
 ## Installation
 
@@ -79,7 +78,7 @@ Optionally, you can move the contents of the /build/exe.win32-3.x folder to a fo
 
 ## Contributing
 
-I will set up a contribution guide when I can. In the meantime, feel free to provide feedback in any way you see fit. This project is still fairly new, after all.
+I will set up a contribution guide when I can. In the meantime, feel free to provide feedback in any way you see fit. If you do decide to submit a PR, make your decisions as clear as possible and provide as many details as you can.
 
 ## Acknowledgements
 
