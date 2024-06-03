@@ -90,4 +90,4 @@ I will set up a contribution guide when I can. In the meantime, feel free to pro
 
 This project is distributed under the MIT License - see the [license file](LICENSE) for details.
 
-Copyright © 2018-2024 Jacob
+Copyright © 2018-2024 Jacob Noah, jink-lang contributors
